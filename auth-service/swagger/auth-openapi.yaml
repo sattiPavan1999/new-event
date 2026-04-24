@@ -1,0 +1,511 @@
+openapi: 3.0.3
+info:
+  title: Authentication Service API
+  description: |
+    Authentication Service for Event Ticketing Platform.
+
+    Provides secure user identity management including registration, login, token refresh, and logout.
+    Uses JWT tokens with BCrypt password hashing for security.
+  version: 1.0.0
+  contact:
+    name: Event Platform Team
+    email: support@eventplatform.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: http://auth-service:8080
+    description: Docker containerized environment
+  - url: https://dev-api.eventplatform.com
+    description: Development environment
+  - url: https://staging-api.eventplatform.com
+    description: Staging environment
+  - url: https://api.eventplatform.com
+    description: Production environment
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization endpoints
+  - name: Health
+    description: Service health check endpoints
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: |
+        Registers a new user with BUYER or ORGANISER role.
+        - Validates email uniqueness
+        - Enforces password requirements (min 8 chars, at least one digit)
+        - ADMIN role cannot be self-assigned
+        - Returns JWT access and refresh tokens
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              buyer:
+                summary: Register as BUYER
+                value:
+                  email: buyer@example.com
+                  fullName: John Doe
+                  password: SecurePass123
+                  role: BUYER
+              organiser:
+                summary: Register as ORGANISER
+                value:
+                  email: organiser@example.com
+                  fullName: Jane Smith
+                  password: SecurePass456
+                  role: ORGANISER
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  email: buyer@example.com
+                  fullName: John Doe
+                  role: BUYER
+                  isActive: true
+                  createdAt: 2026-04-15T10:30:00Z
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                weakPassword:
+                  summary: Weak password
+                  value:
+                    errorCode: VALIDATION_ERROR
+                    message: Password must be at least 8 characters with at least one digit
+                    timestamp: 2026-04-21T12:00:00Z
+                    traceId: 123e4567-e89b-12d3-a456-426614174000
+                invalidRole:
+                  summary: Invalid role
+                  value:
+                    errorCode: INVALID_ROLE
+                    message: Invalid role. Must be BUYER or ORGANISER
+                    timestamp: 2026-04-21T12:00:00Z
+                    traceId: 123e4567-e89b-12d3-a456-426614174000
+                adminRole:
+                  summary: ADMIN self-assignment attempt
+                  value:
+                    errorCode: INVALID_ROLE
+                    message: ADMIN role cannot be self-assigned
+                    timestamp: 2026-04-21T12:00:00Z
+                    traceId: 123e4567-e89b-12d3-a456-426614174000
+        '409':
+          description: Conflict - email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errorCode: DUPLICATE_EMAIL
+                message: Email already registered
+                timestamp: 2026-04-21T12:00:00Z
+                traceId: 123e4567-e89b-12d3-a456-426614174000
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: |
+        Authenticates existing user with email and password.
+        - Returns same error message for non-existent email or wrong password (security)
+        - Issues new JWT token pair on success
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: buyer@example.com
+              password: SecurePass123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  email: buyer@example.com
+                  fullName: John Doe
+                  role: BUYER
+                  isActive: true
+                  createdAt: 2026-04-15T10:30:00Z
+        '400':
+          description: Bad request - missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errorCode: VALIDATION_ERROR
+                message: Email is required, Password is required
+                timestamp: 2026-04-21T12:00:00Z
+                traceId: 123e4567-e89b-12d3-a456-426614174000
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errorCode: INVALID_CREDENTIALS
+                message: Invalid email or password
+                timestamp: 2026-04-21T12:00:00Z
+                traceId: 123e4567-e89b-12d3-a456-426614174000
+
+  /api/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: |
+        Exchanges a valid refresh token for a new token pair.
+        - Implements token rotation: old refresh token is deleted
+        - Returns 401 if refresh token is expired or invalid
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  email: buyer@example.com
+                  fullName: John Doe
+                  role: BUYER
+                  isActive: true
+                  createdAt: 2026-04-15T10:30:00Z
+        '400':
+          description: Bad request - missing refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errorCode: VALIDATION_ERROR
+                message: Refresh token is required
+                timestamp: 2026-04-21T12:00:00Z
+                traceId: 123e4567-e89b-12d3-a456-426614174000
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errorCode: INVALID_TOKEN
+                message: Invalid or expired refresh token
+                timestamp: 2026-04-21T12:00:00Z
+                traceId: 123e4567-e89b-12d3-a456-426614174000
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: |
+        Revokes the provided refresh token.
+        - Idempotent: returns 200 even if token not found
+        - Frontend should clear stored tokens
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+            example:
+              refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+              example:
+                message: Logged out successfully
+        '400':
+          description: Bad request - missing refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errorCode: VALIDATION_ERROR
+                message: Refresh token is required
+                timestamp: 2026-04-21T12:00:00Z
+                traceId: 123e4567-e89b-12d3-a456-426614174000
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: General health check
+      description: Returns service health status
+      operationId: health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+                  service:
+                    type: string
+                    example: auth-service
+
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Kubernetes readiness probe endpoint
+      operationId: ready
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: READY
+                  service:
+                    type: string
+                    example: auth-service
+
+  /health/live:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      description: Kubernetes liveness probe endpoint
+      operationId: live
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ALIVE
+                  service:
+                    type: string
+                    example: auth-service
+
+  /v1/auth/health:
+    get:
+      tags:
+        - Health
+      summary: Versioned health check
+      description: Version-specific health check endpoint
+      operationId: v1Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+                  service:
+                    type: string
+                    example: auth-service
+                  version:
+                    type: string
+                    example: v1
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - fullName
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+          example: user@example.com
+        fullName:
+          type: string
+          description: User's full name
+          example: John Doe
+        password:
+          type: string
+          format: password
+          description: Password (min 8 chars, at least one digit)
+          example: SecurePass123
+        role:
+          type: string
+          enum: [BUYER, ORGANISER]
+          description: User role (ADMIN cannot be self-assigned)
+          example: BUYER
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's registered email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          description: User's password
+          example: SecurePass123
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Valid JWT refresh token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    LogoutRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token to revoke
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token (valid for 15 minutes)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: JWT refresh token (valid for 7 days)
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/UserDto'
+
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@example.com
+        fullName:
+          type: string
+          description: User's full name
+          example: John Doe
+        role:
+          type: string
+          enum: [BUYER, ORGANISER, ADMIN]
+          description: User's role
+          example: BUYER
+        isActive:
+          type: boolean
+          description: Account active status
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: 2026-04-15T10:30:00Z
+
+    LogoutResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Confirmation message
+          example: Logged out successfully
+
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          description: Error code identifier
+          example: INVALID_CREDENTIALS
+        message:
+          type: string
+          description: Human-readable error message
+          example: Invalid email or password
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: 2026-04-21T12:00:00Z
+        traceId:
+          type: string
+          format: uuid
+          description: Request trace ID for debugging
+          example: 123e4567-e89b-12d3-a456-426614174000

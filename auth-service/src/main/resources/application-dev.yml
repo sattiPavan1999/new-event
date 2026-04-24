@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/eventplatform
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.eventplatform.auth: DEBUG
