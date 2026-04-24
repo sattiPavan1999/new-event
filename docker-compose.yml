@@ -22,7 +22,7 @@ services:
 
   auth-service:
     build:
-      context: ./auth-service          # fix: was ./auth_service (directory uses hyphen)
+      context: ./auth-service
       dockerfile: Dockerfile
     container_name: auth-service
     environment:
@@ -68,7 +68,7 @@ services:
     networks:
       - ems-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health/liveness"]  # fix: actuator base-path:/ shadows /health/live; use actuator probe path
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health/live" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -80,27 +80,30 @@ services:
       dockerfile: Dockerfile
     container_name: order-service
     environment:
+      # Placeholder keys always fail Razorpay auth. For local stack without a Razorpay account, mock checkout skips Razorpay.
+      MOCK_PAYMENT_CHECKOUT: "true"
+      RAZORPAY_KEY_ID: ""
+      RAZORPAY_KEY_SECRET: ""
+      RAZORPAY_WEBHOOK_SECRET: ""
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
-      DB_USERNAME: postgres           # fix: was DATABASE_USERNAME (properties use DB_USERNAME)
-      DB_PASSWORD: postgres           # fix: was DATABASE_PASSWORD (properties use DB_PASSWORD)
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
       JWT_SECRET: mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS256Algorithm
-      JWT_ACCESS_EXPIRY_MS: 900000    # fix: was JWT_ACCESS_EXPIRY (properties use JWT_ACCESS_EXPIRY_MS)
-      RAZORPAY_KEY_ID: your_razorpay_key_id_here        # fix: was STRIPE_SECRET_KEY
-      RAZORPAY_KEY_SECRET: your_razorpay_key_secret_here # fix: was STRIPE_WEBHOOK_SECRET
-      RAZORPAY_WEBHOOK_SECRET: your_razorpay_webhook_secret_here
-      EVENT_SERVICE_BASE_URL: http://event-service:8080  # fix: was missing (default localhost won't work in Docker)
+      JWT_ACCESS_EXPIRY: 900000
+      JWT_REFRESH_EXPIRY: 604800000
+      EVENT_SERVICE_BASE_URL: http://event-service:8080
+      APP_FRONTEND_BASE_URL: http://localhost:5173
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
     ports:
       - "8082:8080"
     depends_on:
       postgres:
         condition: service_healthy
-      event-service:
-        condition: service_healthy
     networks:
       - ems-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health/live" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -112,17 +115,18 @@ services:
       dockerfile: Dockerfile
     container_name: payment-service
     environment:
+      RAZORPAY_KEY_ID: your_razorpay_key_id_here
+      RAZORPAY_KEY_SECRET: your_razorpay_key_secret_here
+      RAZORPAY_WEBHOOK_SECRET: your_razorpay_webhook_secret_here
+      RAZORPAY_SUCCESS_URL: http://localhost:3000/orders/success
+      RAZORPAY_CANCEL_URL: http://localhost:3000/orders/cancel
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
-      DB_USERNAME: postgres           # fix: was DATABASE_USERNAME (properties use DB_USERNAME)
-      DB_PASSWORD: postgres           # fix: was DATABASE_PASSWORD (properties use DB_PASSWORD)
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
       JWT_SECRET: mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS256Algorithm
-      JWT_ACCESS_EXPIRY_MS: 900000    # fix: was JWT_ACCESS_EXPIRY (properties use JWT_ACCESS_EXPIRY_MS)
-      RAZORPAY_KEY_ID: your_razorpay_key_id_here          # fix: was STRIPE_SECRET_KEY
-      RAZORPAY_KEY_SECRET: your_razorpay_key_secret_here  # fix: was STRIPE_API_KEY
-      RAZORPAY_WEBHOOK_SECRET: your_razorpay_webhook_secret_here  # fix: was STRIPE_WEBHOOK_SECRET (also had typo 'herec')
-      RAZORPAY_SUCCESS_URL: http://localhost:3000/payment/success  # fix: was STRIPE_SUCCESS-URL (invalid hyphen in key)
-      RAZORPAY_CANCEL_URL: http://localhost:3000/payment/cancel    # fix: was STRIPE_CANCEL-URL (invalid hyphen in key)
+      JWT_ACCESS_EXPIRY: 900000
+      JWT_REFRESH_EXPIRY: 604800000
     ports:
       - "8083:8080"
     depends_on:
@@ -131,7 +135,7 @@ services:
     networks:
       - ems-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health/liveness" ]
       interval: 30s
       timeout: 10s
       retries: 3
