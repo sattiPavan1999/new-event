@@ -34,11 +34,11 @@ public class JwtUtil {
 
     public UUID getBuyerIdFromToken(String token) {
         Claims claims = validateTokenAndGetClaims(token);
-        String buyerIdString = claims.get("buyer_id", String.class);
-        if (buyerIdString == null) {
-            throw new UnauthorizedException("Token does not contain buyer_id");
+        String subject = claims.getSubject();
+        if (subject == null) {
+            throw new UnauthorizedException("Token does not contain subject");
         }
-        return UUID.fromString(buyerIdString);
+        return UUID.fromString(subject);
     }
 
     public String getRoleFromToken(String token) {

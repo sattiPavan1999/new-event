@@ -9,7 +9,9 @@ import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
 import com.ticketing.orderservice.repository.OrderItemRepository;
 import com.ticketing.orderservice.repository.OrderRepository;
+import com.ticketing.orderservice.repository.TicketTierRepository;
 import com.ticketing.orderservice.util.AuditService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,15 +35,21 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final EventServiceClient eventServiceClient;
     private final RazorpayService razorpayService;
+    private final TicketTierRepository ticketTierRepository;
     private final AuditService auditService;
+
+    @Value("${mock.payment.checkout:false}")
+    private boolean mockPaymentCheckout;
 
     public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                         EventServiceClient eventServiceClient,
-                        RazorpayService razorpayService, AuditService auditService) {
+                        RazorpayService razorpayService, TicketTierRepository ticketTierRepository,
+                        AuditService auditService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.eventServiceClient = eventServiceClient;
         this.razorpayService = razorpayService;
+        this.ticketTierRepository = ticketTierRepository;
         this.auditService = auditService;
     }
 
@@ -92,9 +102,11 @@ public class OrderService {
             orderItem.setTierId(tier.getId());
             orderItem.setTierName(tier.getName());
             orderItem.setEventTitle(event.getTitle());
-            orderItem.setEventDate(event.getEventDate());
+            Instant eventDate = LocalDateTime.parse(event.getEventDate()).toInstant(ZoneOffset.UTC);
+            orderItem.setEventDate(eventDate);
             orderItem.setQuantity(itemRequest.getQuantity());
             orderItem.setUnitPrice(tier.getPrice());
+            orderItem.setVenueName(event.getVenue() != null ? event.getVenue().getName() : null);
             orderItem.setCreatedAt(now);
             order.addItem(orderItem);
 
@@ -105,6 +117,17 @@ public class OrderService {
         orderRepository.save(order);
 
         auditService.logOrderCreated(orderId, buyerId, request.getItems().size(), totalAmount.toString());
+
+        if (mockPaymentCheckout) {
+            for (OrderItem item : order.getItems()) {
+                ticketTierRepository.decrementRemainingQty(item.getTierId(), item.getQuantity());
+            }
+            order.setStatus(OrderStatus.CONFIRMED);
+            order.setUpdatedAt(Instant.now());
+            orderRepository.save(order);
+            auditService.logOrderConfirmed(orderId);
+            return new CreateOrderResponse(orderId, OrderStatus.CONFIRMED.name(), totalAmount, responseItems);
+        }
 
         String successUrl = "http://localhost:3000/orders/" + orderId + "/success";
         String cancelUrl = "http://localhost:3000/events/" + event.getId();
@@ -168,7 +191,8 @@ public class OrderService {
                         item.getEventTitle(),
                         item.getEventDate(),
                         item.getQuantity(),
-                        item.getUnitPrice()
+                        item.getUnitPrice(),
+                        item.getVenueName()
                 ))
                 .collect(Collectors.toList());
 

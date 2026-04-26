@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
+import { orderService } from '@/services/order';
+import { useAuth } from '@/contexts/AuthContext';
 import type { TicketTier } from '@/types/event';
+import { BuyerLayout } from '@/components/buyer-layout';
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
 import { Alert } from '@/components/alert';
@@ -40,6 +43,7 @@ const BADGE_STYLES: Record<Exclude<TierUIStatus, 'AVAILABLE'>, { label: string; 
 export const EventDetailView: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['event', eventId],
@@ -48,6 +52,8 @@ export const EventDetailView: React.FC = () => {
   });
 
   const [ticketSelections, setTicketSelections] = useState<Record<string, number>>({});
+  const [buyError, setBuyError] = useState<string | null>(null);
+  const [buying, setBuying] = useState(false);
 
   useEffect(() => {
     if (event?.tiers) {
@@ -60,38 +66,66 @@ export const EventDetailView: React.FC = () => {
   }, [event?.id]);
 
   const hasAnySelection = Object.values(ticketSelections).some((qty) => qty > 0);
+  const canBuy = !user || user.role === 'BUYER';
 
   const handleQtyChange = (tierId: string, value: number, tier: TicketTier) => {
     const clamped = Math.max(0, Math.min(value, getMaxSelectableQty(tier)));
     setTicketSelections((prev) => ({ ...prev, [tierId]: clamped }));
   };
 
-  const handleBuyNow = () => {
-    if (!event?.tiers) return;
-    const summary = event.tiers
-      .filter((tier) => (ticketSelections[tier.id] ?? 0) > 0)
-      .map((tier) => `${ticketSelections[tier.id]}x ${tier.name}`)
-      .join(', ');
-    window.alert(`Order summary:\n${summary}`);
+  const handleBuyNow = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!event) return;
+    setBuyError(null);
+    setBuying(true);
+    try {
+      const items = event.tiers
+        .filter((tier) => (ticketSelections[tier.id] ?? 0) > 0)
+        .map((tier) => ({ tierId: tier.id, quantity: ticketSelections[tier.id] }));
+
+      const response = await orderService.createOrder({ eventId: event.id, items });
+
+      const confirmationItems = event.tiers
+        .filter((tier) => (ticketSelections[tier.id] ?? 0) > 0)
+        .map((tier) => ({
+          tierName: tier.name,
+          quantity: ticketSelections[tier.id],
+          unitPrice: tier.price,
+        }));
+
+      navigate(`/orders/${response.orderId}`, {
+        state: {
+          orderId: response.orderId,
+          status: response.status,
+          eventTitle: event.title,
+          totalAmount: response.totalAmount,
+          items: confirmationItems,
+        },
+      });
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        'Failed to place order. Please try again.';
+      setBuyError(msg);
+    } finally {
+      setBuying(false);
+    }
   };
 
   const now = new Date();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
-          <button
-            onClick={() => navigate('/events')}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-          >
-            ← Back to Events
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900">Event Details</h1>
-        </div>
-      </header>
-
+    <BuyerLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <button
+          onClick={() => navigate('/events')}
+          className="text-blue-600 hover:text-blue-800 text-sm font-medium mb-6 block"
+        >
+          ← Back to Events
+        </button>
         {/* Loading skeleton */}
         {isLoading && (
           <div className="lg:grid lg:grid-cols-3 lg:gap-8 animate-pulse">
@@ -256,14 +290,23 @@ export const EventDetailView: React.FC = () => {
                   <p className="text-gray-500 text-sm">No tickets available for this event.</p>
                 )}
 
-                <Button fullWidth disabled={!hasAnySelection} onClick={handleBuyNow}>
-                  Buy Now
-                </Button>
+                {buyError && (
+                  <Alert variant="error">{buyError}</Alert>
+                )}
+                {canBuy ? (
+                  <Button fullWidth disabled={!hasAnySelection || buying} onClick={handleBuyNow}>
+                    {buying ? 'Placing Order…' : 'Buy Now'}
+                  </Button>
+                ) : (
+                  <p className="text-sm text-center text-gray-400 py-2">
+                    Admins and organisers cannot purchase tickets.
+                  </p>
+                )}
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
+    </BuyerLayout>
   );
 };

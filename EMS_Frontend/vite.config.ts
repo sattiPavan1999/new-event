@@ -26,6 +26,17 @@ export default defineConfig({
           });
         },
       },
+      '/api/orders': {
+        target: 'http://127.0.0.1:8082',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.removeHeader('origin');
+            proxyReq.removeHeader('referer');
+          });
+        },
+      },
       '/api': {
         target: 'http://127.0.0.1:8081',
         changeOrigin: true,

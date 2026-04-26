@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
 import { EventCategory } from '@/types/event';
+import { BuyerLayout } from '@/components/buyer-layout';
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
-import { LogoutDialog } from '@/components/logout-dialog/logout-dialog';
 
 export const EventListingView: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +13,6 @@ export const EventListingView: React.FC = () => {
   const [category, setCategory] = useState<string>('');
   const [city, setCity] = useState<string>('');
   const [page, setPage] = useState(0);
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['events', { search, category, city, page }],
@@ -50,19 +49,7 @@ export const EventListingView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Browse Events</h1>
-          <Button variant="danger" onClick={() => setIsLogoutOpen(true)}>
-            Logout
-          </Button>
-        </div>
-      </header>
-
-      <LogoutDialog isOpen={isLogoutOpen} onClose={() => setIsLogoutOpen(false)} />
-
+    <BuyerLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -198,6 +185,6 @@ export const EventListingView: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+    </BuyerLayout>
   );
 };

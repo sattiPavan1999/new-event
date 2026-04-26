@@ -35,6 +35,9 @@ public class OrderItem {
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
+    @Column(name = "venue_name", length = 255)
+    private String venueName;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -115,6 +118,14 @@ public class OrderItem {
 
     public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public String getVenueName() {
+        return venueName;
+    }
+
+    public void setVenueName(String venueName) {
+        this.venueName = venueName;
     }
 
     public Instant getCreatedAt() {

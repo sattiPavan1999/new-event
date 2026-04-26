@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { User, AuthResponse } from '@/types/auth';
 import { setupAuthInterceptor } from '@/services/auth';
 import { setupEventApiInterceptor } from '@/services/event';
+import { setupOrderApiInterceptor } from '@/services/order';
 
 interface AuthContextType {
   user: User | null;
@@ -39,6 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     setupAuthInterceptor(() => accessToken);
     setupEventApiInterceptor(() => accessToken, () => user?.id ?? null);
+    setupOrderApiInterceptor(() => accessToken);
   }, [accessToken, user]);
 
   const login = (authData: AuthResponse) => {

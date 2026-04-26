@@ -10,6 +10,8 @@ import { AdminDashboardView } from './views/admin-dashboard';
 import { AdminEventsView } from './views/admin-events';
 import { AdminEventDetailView } from './views/admin-event-detail';
 import { AdminEventCreateView } from './views/admin-event-create';
+import { OrderConfirmationView } from './views/order-confirmation';
+import { MyBookingsView } from './views/my-bookings';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -70,6 +72,26 @@ function AppRoutes() {
       {/* Public event routes */}
       <Route path="/events" element={<EventListingView />} />
       <Route path="/events/:eventId" element={<EventDetailView />} />
+
+      {/* Order confirmation — requires BUYER login */}
+      <Route
+        path="/orders/:orderId"
+        element={
+          <ProtectedRoute allowedRoles={['BUYER']}>
+            <OrderConfirmationView />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* My Bookings — requires BUYER login */}
+      <Route
+        path="/my-bookings"
+        element={
+          <ProtectedRoute allowedRoles={['BUYER']}>
+            <MyBookingsView />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Protected admin/organiser routes */}
       <Route

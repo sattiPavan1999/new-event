@@ -12,17 +12,19 @@ public class OrderItemSummary {
     private Instant eventDate;
     private Integer quantity;
     private BigDecimal unitPrice;
+    private String venueName;
 
     public OrderItemSummary() {
     }
 
-    public OrderItemSummary(UUID orderItemId, String tierName, String eventTitle, Instant eventDate, Integer quantity, BigDecimal unitPrice) {
+    public OrderItemSummary(UUID orderItemId, String tierName, String eventTitle, Instant eventDate, Integer quantity, BigDecimal unitPrice, String venueName) {
         this.orderItemId = orderItemId;
         this.tierName = tierName;
         this.eventTitle = eventTitle;
         this.eventDate = eventDate;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
+        this.venueName = venueName;
     }
 
     public UUID getOrderItemId() {
@@ -71,5 +73,13 @@ public class OrderItemSummary {
 
     public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public String getVenueName() {
+        return venueName;
+    }
+
+    public void setVenueName(String venueName) {
+        this.venueName = venueName;
     }
 }
