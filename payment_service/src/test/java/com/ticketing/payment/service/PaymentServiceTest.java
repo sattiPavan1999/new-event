@@ -47,7 +47,6 @@ class PaymentServiceTest {
 
     @Test
     void processWebhook_invalidSignature_throwsInvalidWebhookSignatureException() {
-        // With a wrong secret, signature verification will fail
         String payload = "{\"event\":\"payment_link.paid\"}";
         assertThrows(InvalidWebhookSignatureException.class,
                 () -> paymentService.processWebhook(payload, "invalid-sig"));
@@ -58,30 +57,20 @@ class PaymentServiceTest {
         UUID orderId = UUID.randomUUID();
         String paymentId = "pay_duplicate123";
 
-        // We need to bypass signature verification by using a real HMAC sig.
-        // Instead, spy on the service to mock signature verification.
-        PaymentService spied = spy(paymentService);
-        doNothing().when(spied).processWebhook(anyString(), anyString()); // not ideal — test inner logic instead
-
-        when(paymentEventRepository.existsByRazorpayEventId(paymentId)).thenReturn(true);
-
-        // Test the deduplication path via a public method by directly testing the exception
-        // path through processWebhook with a mocked signature check
         PaymentService serviceWithMockedSig = new PaymentService(
                 paymentRepository, paymentEventRepository, orderRepository,
                 orderItemRepository, ticketTierRepository, auditService, objectMapper) {
             @Override
             public void processWebhook(String payload, String sig) {
-                // Skip signature check for unit test
                 try {
                     com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(payload);
                     String eventType = root.path("event").asText();
-                    String razorpayPaymentId = root.path("payload").path("payment")
+                    String pid = root.path("payload").path("payment")
                             .path("entity").path("id").asText("");
-                    auditService.logWebhookReceived(razorpayPaymentId, eventType);
-                    if (paymentEventRepository.existsByRazorpayEventId(razorpayPaymentId)) {
-                        auditService.logDuplicateWebhook(razorpayPaymentId);
-                        throw new DuplicateEventException("Already processed: " + razorpayPaymentId);
+                    auditService.logWebhookReceived(pid, eventType);
+                    if (paymentEventRepository.existsByEventId(pid)) {
+                        auditService.logDuplicateWebhook(pid);
+                        throw new DuplicateEventException("Already processed: " + pid);
                     }
                 } catch (DuplicateEventException e) {
                     throw e;
@@ -90,6 +79,8 @@ class PaymentServiceTest {
                 }
             }
         };
+
+        when(paymentEventRepository.existsByEventId(paymentId)).thenReturn(true);
 
         String payload = buildSuccessPayload(orderId, paymentId);
         assertThrows(DuplicateEventException.class,
@@ -108,7 +99,7 @@ class PaymentServiceTest {
         Payment savedPayment = new Payment();
         savedPayment.setId(UUID.randomUUID());
 
-        when(paymentEventRepository.existsByRazorpayEventId(paymentId)).thenReturn(false);
+        when(paymentEventRepository.existsByEventId(paymentId)).thenReturn(false);
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(item));
         when(ticketTierRepository.decrementInventory(tierId, 2)).thenReturn(1);
@@ -116,7 +107,6 @@ class PaymentServiceTest {
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(paymentEventRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        // Use a service subclass that skips signature verification
         PaymentService testService = buildServiceSkippingSignature();
         testService.processWebhook(buildSuccessPayload(orderId, paymentId), "sig");
 
@@ -133,7 +123,7 @@ class PaymentServiceTest {
         Payment savedPayment = new Payment();
         savedPayment.setId(UUID.randomUUID());
 
-        when(paymentEventRepository.existsByRazorpayEventId(paymentId)).thenReturn(false);
+        when(paymentEventRepository.existsByEventId(paymentId)).thenReturn(false);
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(paymentRepository.save(any())).thenReturn(savedPayment);
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -156,28 +146,25 @@ class PaymentServiceTest {
                 try {
                     com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(payload);
                     String eventType = root.path("event").asText();
-                    String razorpayPaymentId = root.path("payload").path("payment")
+                    String pid = root.path("payload").path("payment")
                             .path("entity").path("id").asText("");
-                    auditService.logWebhookReceived(razorpayPaymentId, eventType);
-                    if (paymentEventRepository.existsByRazorpayEventId(razorpayPaymentId)) {
-                        auditService.logDuplicateWebhook(razorpayPaymentId);
+                    auditService.logWebhookReceived(pid, eventType);
+                    if (paymentEventRepository.existsByEventId(pid)) {
+                        auditService.logDuplicateWebhook(pid);
                         throw new DuplicateEventException("Already processed");
                     }
-                    // Call private methods via super — not possible; re-route to inner logic
-                    // For testing, call the real processWebhook but skip sig check
                     super.processWebhook(payload, sig);
                 } catch (DuplicateEventException e) {
                     throw e;
                 } catch (Exception ignored) {
-                    // signature fails — re-route
                     try {
                         com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(payload);
                         String eventType = root.path("event").asText();
-                        String payId = root.path("payload").path("payment").path("entity").path("id").asText("");
+                        String pid = root.path("payload").path("payment").path("entity").path("id").asText("");
                         if ("payment_link.paid".equals(eventType)) {
-                            handlePaymentSuccessPublic(root, payId, payload, eventType);
+                            handlePaymentSuccessPublic(root, pid, payload, eventType);
                         } else if ("payment.failed".equals(eventType)) {
-                            handlePaymentFailurePublic(root, payId, payload, eventType);
+                            handlePaymentFailurePublic(root, pid, payload, eventType);
                         }
                     } catch (Exception e2) {
                         throw new RuntimeException(e2);
@@ -203,7 +190,7 @@ class PaymentServiceTest {
                 .divide(BigDecimal.valueOf(100));
         Payment payment = new Payment();
         payment.setOrderId(orderId);
-        payment.setRazorpayPaymentId(payId);
+        payment.setPaymentId(payId);
         payment.setAmount(amount);
         payment.setCurrency("INR");
         payment.setStatus(rows == 1 ? PaymentStatus.SUCCEEDED : PaymentStatus.FAILED);
@@ -212,7 +199,7 @@ class PaymentServiceTest {
         orderRepository.save(order);
         PaymentEvent pe = new PaymentEvent();
         pe.setPaymentId(payment.getId());
-        pe.setRazorpayEventId(payId);
+        pe.setEventId(payId);
         pe.setEventType(eventType);
         pe.setPayload(raw);
         paymentEventRepository.save(pe);
@@ -235,7 +222,7 @@ class PaymentServiceTest {
                 .divide(BigDecimal.valueOf(100));
         Payment payment = new Payment();
         payment.setOrderId(orderId);
-        payment.setRazorpayPaymentId(payId);
+        payment.setPaymentId(payId);
         payment.setAmount(amount);
         payment.setCurrency("INR");
         payment.setStatus(PaymentStatus.FAILED);
@@ -244,7 +231,7 @@ class PaymentServiceTest {
         orderRepository.save(order);
         PaymentEvent pe = new PaymentEvent();
         pe.setPaymentId(payment.getId());
-        pe.setRazorpayEventId(payId);
+        pe.setEventId(payId);
         pe.setEventType(eventType);
         pe.setPayload(raw);
         paymentEventRepository.save(pe);

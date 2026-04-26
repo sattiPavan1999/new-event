@@ -80,11 +80,7 @@ services:
       dockerfile: Dockerfile
     container_name: order-service
     environment:
-      # Placeholder keys always fail Razorpay auth. For local stack without a Razorpay account, mock checkout skips Razorpay.
       MOCK_PAYMENT_CHECKOUT: "true"
-      RAZORPAY_KEY_ID: ""
-      RAZORPAY_KEY_SECRET: ""
-      RAZORPAY_WEBHOOK_SECRET: ""
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
       DATABASE_USERNAME: postgres
@@ -115,11 +111,7 @@ services:
       dockerfile: Dockerfile
     container_name: payment-service
     environment:
-      RAZORPAY_KEY_ID: your_razorpay_key_id_here
-      RAZORPAY_KEY_SECRET: your_razorpay_key_secret_here
-      RAZORPAY_WEBHOOK_SECRET: your_razorpay_webhook_secret_here
-      RAZORPAY_SUCCESS_URL: http://localhost:3000/orders/success
-      RAZORPAY_CANCEL_URL: http://localhost:3000/orders/cancel
+      WEBHOOK_SECRET: ""
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
       DATABASE_USERNAME: postgres

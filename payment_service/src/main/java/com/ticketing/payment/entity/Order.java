@@ -23,8 +23,8 @@ public class Order {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(name = "razorpay_payment_link_id", length = 255)
-    private String razorpayPaymentLinkId;
+    @Column(name = "payment_link_id", length = 255)
+    private String paymentLinkId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -46,11 +46,11 @@ public class Order {
     public Order() {
     }
 
-    public Order(UUID buyerId, OrderStatus status, BigDecimal totalAmount, String razorpayPaymentLinkId) {
+    public Order(UUID buyerId, OrderStatus status, BigDecimal totalAmount, String paymentLinkId) {
         this.buyerId = buyerId;
         this.status = status;
         this.totalAmount = totalAmount;
-        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
+        this.paymentLinkId = paymentLinkId;
     }
 
     public UUID getId() {
@@ -85,12 +85,12 @@ public class Order {
         this.totalAmount = totalAmount;
     }
 
-    public String getRazorpayPaymentLinkId() {
-        return razorpayPaymentLinkId;
+    public String getPaymentLinkId() {
+        return paymentLinkId;
     }
 
-    public void setRazorpayPaymentLinkId(String razorpayPaymentLinkId) {
-        this.razorpayPaymentLinkId = razorpayPaymentLinkId;
+    public void setPaymentLinkId(String paymentLinkId) {
+        this.paymentLinkId = paymentLinkId;
     }
 
     public Instant getCreatedAt() {

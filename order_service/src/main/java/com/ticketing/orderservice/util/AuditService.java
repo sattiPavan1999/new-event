@@ -16,8 +16,8 @@ public class AuditService {
                 maskUuid(orderId), maskUuid(buyerId), itemCount, maskAmount(totalAmount));
     }
 
-    public void logRazorpayLinkCreated(UUID orderId, String paymentLinkId) {
-        auditLogger.info("RAZORPAY_LINK_CREATED - orderId={}, paymentLinkId={}",
+    public void logPaymentLinkCreated(UUID orderId, String paymentLinkId) {
+        auditLogger.info("PAYMENT_LINK_CREATED - orderId={}, paymentLinkId={}",
                 maskUuid(orderId), maskSensitiveData(paymentLinkId));
     }
 

@@ -87,7 +87,7 @@ class ExceptionsTest {
 
     @Test
     void testPaymentServiceExceptionWithCause() {
-        String message = "Razorpay API error";
+        String message = "Payment service error";
         Exception cause = new RuntimeException("Network timeout");
         PaymentServiceException exception = new PaymentServiceException(message, cause);
 

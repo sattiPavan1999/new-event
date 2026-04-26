@@ -30,10 +30,10 @@ class PaymentRepositoryTest {
         return orderRepository.save(order);
     }
 
-    private Payment savePayment(UUID orderId, String razorpayId) {
+    private Payment savePayment(UUID orderId, String paymentId) {
         Payment payment = new Payment();
         payment.setOrderId(orderId);
-        payment.setRazorpayPaymentId(razorpayId);
+        payment.setPaymentId(paymentId);
         payment.setAmount(new BigDecimal("1000.00"));
         payment.setCurrency("INR");
         payment.setStatus(PaymentStatus.SUCCEEDED);
@@ -48,7 +48,7 @@ class PaymentRepositoryTest {
         Optional<Payment> found = paymentRepository.findByOrderId(order.getId());
 
         assertTrue(found.isPresent());
-        assertEquals("pay_findme", found.get().getRazorpayPaymentId());
+        assertEquals("pay_findme", found.get().getPaymentId());
     }
 
     @Test
@@ -70,31 +70,31 @@ class PaymentRepositoryTest {
     }
 
     @Test
-    void paymentEventRepository_existsByRazorpayEventId_detectsDuplicate() {
+    void paymentEventRepository_existsByEventId_detectsDuplicate() {
         Order order = saveOrder();
         Payment payment = savePayment(order.getId(), "pay_event_123");
 
         PaymentEvent event = new PaymentEvent();
         event.setPaymentId(payment.getId());
-        event.setRazorpayEventId("rzp_event_abc");
+        event.setEventId("event_abc");
         event.setEventType("payment_link.paid");
         event.setPayload("{\"test\":true}");
         paymentEventRepository.save(event);
 
-        assertTrue(paymentEventRepository.existsByRazorpayEventId("rzp_event_abc"));
-        assertFalse(paymentEventRepository.existsByRazorpayEventId("rzp_event_unknown"));
+        assertTrue(paymentEventRepository.existsByEventId("event_abc"));
+        assertFalse(paymentEventRepository.existsByEventId("event_unknown"));
     }
 
     @Test
-    void orderRepository_findByRazorpayPaymentLinkId_returnsOrder() {
+    void orderRepository_findByPaymentLinkId_returnsOrder() {
         Order order = saveOrder();
-        order.setRazorpayPaymentLinkId("rpl_test_link");
+        order.setPaymentLinkId("plink_test_link");
         orderRepository.save(order);
 
-        Optional<Order> found = orderRepository.findByRazorpayPaymentLinkId("rpl_test_link");
+        Optional<Order> found = orderRepository.findByPaymentLinkId("plink_test_link");
 
         assertTrue(found.isPresent());
-        assertEquals("rpl_test_link", found.get().getRazorpayPaymentLinkId());
+        assertEquals("plink_test_link", found.get().getPaymentLinkId());
     }
 
     @Test

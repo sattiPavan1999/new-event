@@ -15,7 +15,7 @@ public class AuditService {
     }
 
     public void logPaymentLinkCreated(String orderId, String paymentLinkId) {
-        logger.info("AUDIT: Razorpay payment link created - orderId: {}, paymentLinkId: {}",
+        logger.info("AUDIT: Payment link created - orderId: {}, paymentLinkId: {}",
                     orderId, maskSensitiveData(paymentLinkId));
     }
 

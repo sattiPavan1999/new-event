@@ -3,10 +3,8 @@ package com.ticketing.orderservice.service;
 import com.ticketing.orderservice.client.EventServiceClient;
 import com.ticketing.orderservice.dto.*;
 import com.ticketing.orderservice.entity.Order;
-import com.ticketing.orderservice.entity.OrderItem;
 import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
-import com.ticketing.orderservice.repository.OrderItemRepository;
 import com.ticketing.orderservice.repository.OrderRepository;
 import com.ticketing.orderservice.repository.TicketTierRepository;
 import com.ticketing.orderservice.util.AuditService;
@@ -34,9 +32,7 @@ import static org.mockito.Mockito.*;
 class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
-    @Mock private OrderItemRepository orderItemRepository;
     @Mock private EventServiceClient eventServiceClient;
-    @Mock private RazorpayService razorpayService;
     @Mock private TicketTierRepository ticketTierRepository;
     @Mock private AuditService auditService;
 
@@ -44,8 +40,8 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderService(orderRepository, orderItemRepository,
-                eventServiceClient, razorpayService, ticketTierRepository, auditService);
+        orderService = new OrderService(orderRepository, eventServiceClient,
+                ticketTierRepository, auditService);
         ReflectionTestUtils.setField(orderService, "mockPaymentCheckout", true);
     }
 
@@ -123,7 +119,6 @@ class OrderServiceTest {
         EventServiceResponse event = buildEvent(eventId, tierId);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
 
-        // maxPerOrder is 5, requesting 10
         CreateOrderRequest request = new CreateOrderRequest(eventId,
                 List.of(new OrderItemRequest(tierId, 10)));
 
@@ -136,7 +131,6 @@ class OrderServiceTest {
         UUID eventId = UUID.randomUUID();
         UUID tierId = UUID.randomUUID();
         EventServiceResponse event = buildEvent(eventId, tierId);
-        // remaining is 2, requesting 3
         event.getTiers().get(0).setRemainingQty(2);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
 
@@ -181,7 +175,6 @@ class OrderServiceTest {
         Page<Order> emptyPage = new PageImpl<>(Collections.emptyList());
         when(orderRepository.findByBuyerIdAndStatus(any(), any(), any())).thenReturn(emptyPage);
 
-        // negative page and out-of-range size should not throw
         assertDoesNotThrow(() -> orderService.getMyOrders(buyerId, -5, 200));
     }
 

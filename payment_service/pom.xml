@@ -23,7 +23,6 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <razorpay.version>1.4.3</razorpay.version>
         <flyway.version>10.10.0</flyway.version>
     </properties>
 
@@ -66,13 +65,6 @@
             <artifactId>flyway-database-postgresql</artifactId>
             <version>${flyway.version}</version>
             <scope>runtime</scope>
-        </dependency>
-
-        <!-- Razorpay SDK -->
-        <dependency>
-            <groupId>com.razorpay</groupId>
-            <artifactId>razorpay-java</artifactId>
-            <version>${razorpay.version}</version>
         </dependency>
 
         <!-- JSON Processing -->

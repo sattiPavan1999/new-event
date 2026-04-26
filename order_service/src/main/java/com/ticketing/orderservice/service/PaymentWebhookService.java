@@ -120,6 +120,6 @@ public class PaymentWebhookService {
         order.setUpdatedAt(Instant.now());
         orderRepository.save(order);
 
-        auditService.logOrderFailed(orderId, "Payment failed on Razorpay");
+        auditService.logOrderFailed(orderId, "Payment failed");
     }
 }

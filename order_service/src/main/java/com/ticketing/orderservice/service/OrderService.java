@@ -1,13 +1,11 @@
 package com.ticketing.orderservice.service;
 
-import com.razorpay.PaymentLink;
 import com.ticketing.orderservice.client.EventServiceClient;
 import com.ticketing.orderservice.dto.*;
 import com.ticketing.orderservice.entity.Order;
 import com.ticketing.orderservice.entity.OrderItem;
 import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
-import com.ticketing.orderservice.repository.OrderItemRepository;
 import com.ticketing.orderservice.repository.OrderRepository;
 import com.ticketing.orderservice.repository.TicketTierRepository;
 import com.ticketing.orderservice.util.AuditService;
@@ -32,23 +30,19 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final EventServiceClient eventServiceClient;
-    private final RazorpayService razorpayService;
     private final TicketTierRepository ticketTierRepository;
     private final AuditService auditService;
 
     @Value("${mock.payment.checkout:false}")
     private boolean mockPaymentCheckout;
 
-    public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
+    public OrderService(OrderRepository orderRepository,
                         EventServiceClient eventServiceClient,
-                        RazorpayService razorpayService, TicketTierRepository ticketTierRepository,
+                        TicketTierRepository ticketTierRepository,
                         AuditService auditService) {
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
         this.eventServiceClient = eventServiceClient;
-        this.razorpayService = razorpayService;
         this.ticketTierRepository = ticketTierRepository;
         this.auditService = auditService;
     }
@@ -128,19 +122,6 @@ public class OrderService {
             auditService.logOrderConfirmed(orderId);
             return new CreateOrderResponse(orderId, OrderStatus.CONFIRMED.name(), totalAmount, responseItems);
         }
-
-        String successUrl = "http://localhost:3000/orders/" + orderId + "/success";
-        String cancelUrl = "http://localhost:3000/events/" + event.getId();
-
-        long totalAmountInPaise = totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
-        PaymentLink paymentLink = razorpayService.createPaymentLink(orderId, totalAmountInPaise, successUrl, cancelUrl);
-
-        String paymentLinkId = paymentLink.get("id");
-        order.setRazorpayPaymentLinkId(paymentLinkId);
-        order.setUpdatedAt(Instant.now());
-        orderRepository.save(order);
-
-        auditService.logRazorpayLinkCreated(orderId, paymentLinkId);
 
         return new CreateOrderResponse(orderId, OrderStatus.PENDING.name(), totalAmount, responseItems);
     }
@@ -223,7 +204,7 @@ public class OrderService {
                 order.getId(),
                 order.getStatus().name(),
                 order.getTotalAmount(),
-                order.getRazorpayPaymentLinkId(),
+                order.getPaymentLinkId(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
                 items

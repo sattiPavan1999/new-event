@@ -2,8 +2,6 @@ package com.ticketing.payment.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.razorpay.RazorpayException;
-import com.razorpay.Utils;
 import com.ticketing.payment.entity.*;
 import com.ticketing.payment.exception.DuplicateEventException;
 import com.ticketing.payment.exception.InvalidWebhookSignatureException;
@@ -18,7 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +35,7 @@ public class PaymentService {
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
 
-    @Value("${razorpay.webhook.secret}")
+    @Value("${webhook.secret:}")
     private String webhookSecret;
 
     public PaymentService(PaymentRepository paymentRepository,
@@ -64,36 +66,44 @@ public class PaymentService {
         }
 
         String eventType = root.path("event").asText();
-        String razorpayPaymentId = root.path("payload").path("payment").path("entity").path("id").asText("");
+        String paymentId = root.path("payload").path("payment").path("entity").path("id").asText("");
 
-        auditService.logWebhookReceived(razorpayPaymentId, eventType);
+        auditService.logWebhookReceived(paymentId, eventType);
 
-        if (paymentEventRepository.existsByRazorpayEventId(razorpayPaymentId)) {
-            auditService.logDuplicateWebhook(razorpayPaymentId);
-            throw new DuplicateEventException("Event already processed: " + razorpayPaymentId);
+        if (paymentEventRepository.existsByEventId(paymentId)) {
+            auditService.logDuplicateWebhook(paymentId);
+            throw new DuplicateEventException("Event already processed: " + paymentId);
         }
 
         if ("payment_link.paid".equals(eventType)) {
-            handlePaymentSuccess(root, razorpayPaymentId, payload, eventType);
+            handlePaymentSuccess(root, paymentId, payload, eventType);
         } else if ("payment.failed".equals(eventType)) {
-            handlePaymentFailure(root, razorpayPaymentId, payload, eventType);
+            handlePaymentFailure(root, paymentId, payload, eventType);
         }
     }
 
     private void verifyWebhookSignature(String payload, String signatureHeader) {
+        if (webhookSecret == null || webhookSecret.isEmpty()) {
+            return;
+        }
         try {
-            boolean valid = Utils.verifyWebhookSignature(payload, signatureHeader, webhookSecret);
-            if (!valid) {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(webhookSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            String computed = HexFormat.of().formatHex(hash);
+            if (!computed.equals(signatureHeader)) {
                 auditService.logWebhookSignatureFailure("Signature mismatch");
                 throw new InvalidWebhookSignatureException("Invalid webhook signature");
             }
-        } catch (RazorpayException e) {
+        } catch (InvalidWebhookSignatureException e) {
+            throw e;
+        } catch (Exception e) {
             auditService.logWebhookSignatureFailure(e.getMessage());
             throw new InvalidWebhookSignatureException("Webhook signature verification failed: " + e.getMessage());
         }
     }
 
-    private void handlePaymentSuccess(JsonNode root, String razorpayPaymentId, String rawPayload, String eventType) {
+    private void handlePaymentSuccess(JsonNode root, String paymentId, String rawPayload, String eventType) {
         JsonNode paymentEntity = root.path("payload").path("payment").path("entity");
         JsonNode notes = paymentEntity.path("notes");
 
@@ -122,7 +132,7 @@ public class PaymentService {
         if (rowsUpdated == 1) {
             Payment payment = new Payment();
             payment.setOrderId(orderId);
-            payment.setRazorpayPaymentId(razorpayPaymentId);
+            payment.setPaymentId(paymentId);
             payment.setAmount(amount);
             payment.setCurrency(currency);
             payment.setStatus(PaymentStatus.SUCCEEDED);
@@ -133,7 +143,7 @@ public class PaymentService {
 
             PaymentEvent paymentEvent = new PaymentEvent();
             paymentEvent.setPaymentId(payment.getId());
-            paymentEvent.setRazorpayEventId(razorpayPaymentId);
+            paymentEvent.setEventId(paymentId);
             paymentEvent.setEventType(eventType);
             paymentEvent.setPayload(rawPayload);
             paymentEventRepository.save(paymentEvent);
@@ -146,7 +156,7 @@ public class PaymentService {
 
             Payment payment = new Payment();
             payment.setOrderId(orderId);
-            payment.setRazorpayPaymentId(razorpayPaymentId);
+            payment.setPaymentId(paymentId);
             payment.setAmount(amount);
             payment.setCurrency(currency);
             payment.setStatus(PaymentStatus.FAILED);
@@ -157,7 +167,7 @@ public class PaymentService {
 
             PaymentEvent paymentEvent = new PaymentEvent();
             paymentEvent.setPaymentId(payment.getId());
-            paymentEvent.setRazorpayEventId(razorpayPaymentId);
+            paymentEvent.setEventId(paymentId);
             paymentEvent.setEventType(eventType);
             paymentEvent.setPayload(rawPayload);
             paymentEventRepository.save(paymentEvent);
@@ -167,7 +177,7 @@ public class PaymentService {
         }
     }
 
-    private void handlePaymentFailure(JsonNode root, String razorpayPaymentId, String rawPayload, String eventType) {
+    private void handlePaymentFailure(JsonNode root, String paymentId, String rawPayload, String eventType) {
         JsonNode paymentEntity = root.path("payload").path("payment").path("entity");
         JsonNode notes = paymentEntity.path("notes");
 
@@ -187,7 +197,7 @@ public class PaymentService {
 
         Payment payment = new Payment();
         payment.setOrderId(orderId);
-        payment.setRazorpayPaymentId(razorpayPaymentId);
+        payment.setPaymentId(paymentId);
         payment.setAmount(amount);
         payment.setCurrency(currency);
         payment.setStatus(PaymentStatus.FAILED);
@@ -198,7 +208,7 @@ public class PaymentService {
 
         PaymentEvent paymentEvent = new PaymentEvent();
         paymentEvent.setPaymentId(payment.getId());
-        paymentEvent.setRazorpayEventId(razorpayPaymentId);
+        paymentEvent.setEventId(paymentId);
         paymentEvent.setEventType(eventType);
         paymentEvent.setPayload(rawPayload);
         paymentEventRepository.save(paymentEvent);

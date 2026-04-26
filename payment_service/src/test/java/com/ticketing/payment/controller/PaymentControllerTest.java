@@ -29,7 +29,7 @@ class PaymentControllerTest {
         doNothing().when(paymentService).processWebhook(any(), any());
 
         mockMvc.perform(post("/api/payments/webhook")
-                        .header("X-Razorpay-Signature", "valid-sig")
+                        .header("X-Webhook-Signature", "valid-sig")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_PAYLOAD))
                 .andExpect(status().isOk())
@@ -42,7 +42,7 @@ class PaymentControllerTest {
                 .when(paymentService).processWebhook(any(), any());
 
         mockMvc.perform(post("/api/payments/webhook")
-                        .header("X-Razorpay-Signature", "bad-sig")
+                        .header("X-Webhook-Signature", "bad-sig")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_PAYLOAD))
                 .andExpect(status().isUnauthorized());
@@ -54,7 +54,7 @@ class PaymentControllerTest {
                 .when(paymentService).processWebhook(any(), any());
 
         mockMvc.perform(post("/api/payments/webhook")
-                        .header("X-Razorpay-Signature", "sig")
+                        .header("X-Webhook-Signature", "sig")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_PAYLOAD))
                 .andExpect(status().isOk())

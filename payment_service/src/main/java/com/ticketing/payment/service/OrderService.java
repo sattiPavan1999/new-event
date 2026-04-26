@@ -8,7 +8,6 @@ import com.ticketing.payment.exception.InvalidTierException;
 import com.ticketing.payment.repository.OrderItemRepository;
 import com.ticketing.payment.repository.OrderRepository;
 import com.ticketing.payment.repository.TicketTierRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,24 +20,15 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final TicketTierRepository ticketTierRepository;
-    private final RazorpayService razorpayService;
     private final AuditService auditService;
-
-    @Value("${razorpay.success-url}")
-    private String successUrl;
-
-    @Value("${razorpay.cancel-url}")
-    private String cancelUrl;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         TicketTierRepository ticketTierRepository,
-                        RazorpayService razorpayService,
                         AuditService auditService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.ticketTierRepository = ticketTierRepository;
-        this.razorpayService = razorpayService;
         this.auditService = auditService;
     }
 
@@ -86,19 +76,6 @@ public class OrderService {
                 request.getQuantity(),
                 buyerId.toString());
 
-        String checkoutUrl = razorpayService.createPaymentLink(
-                order.getId(),
-                totalAmount,
-                tier.getName(),
-                request.getQuantity(),
-                successUrl,
-                cancelUrl);
-
-        order.setRazorpayPaymentLinkId(razorpayService.extractPaymentLinkId(checkoutUrl));
-        orderRepository.save(order);
-
-        auditService.logPaymentLinkCreated(order.getId().toString(), order.getRazorpayPaymentLinkId());
-
-        return new CreateOrderResponse(order.getId(), checkoutUrl);
+        return new CreateOrderResponse(order.getId(), null);
     }
 }

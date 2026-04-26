@@ -18,8 +18,8 @@ public class PaymentEvent {
     @Column(name = "payment_id", nullable = false)
     private UUID paymentId;
 
-    @Column(name = "razorpay_event_id", nullable = false, unique = true, length = 255)
-    private String razorpayEventId;
+    @Column(name = "event_id", nullable = false, unique = true, length = 255)
+    private String eventId;
 
     @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
@@ -41,9 +41,9 @@ public class PaymentEvent {
     public PaymentEvent() {
     }
 
-    public PaymentEvent(UUID paymentId, String razorpayEventId, String eventType, String payload) {
+    public PaymentEvent(UUID paymentId, String eventId, String eventType, String payload) {
         this.paymentId = paymentId;
-        this.razorpayEventId = razorpayEventId;
+        this.eventId = eventId;
         this.eventType = eventType;
         this.payload = payload;
     }
@@ -64,12 +64,12 @@ public class PaymentEvent {
         this.paymentId = paymentId;
     }
 
-    public String getRazorpayEventId() {
-        return razorpayEventId;
+    public String getEventId() {
+        return eventId;
     }
 
-    public void setRazorpayEventId(String razorpayEventId) {
-        this.razorpayEventId = razorpayEventId;
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
     }
 
     public String getEventType() {

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,7 +29,6 @@ class PaymentOrderServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private OrderItemRepository orderItemRepository;
     @Mock private TicketTierRepository ticketTierRepository;
-    @Mock private RazorpayService razorpayService;
     @Mock private AuditService auditService;
 
     private OrderService orderService;
@@ -38,13 +36,11 @@ class PaymentOrderServiceTest {
     @BeforeEach
     void setUp() {
         orderService = new OrderService(orderRepository, orderItemRepository,
-                ticketTierRepository, razorpayService, auditService);
-        ReflectionTestUtils.setField(orderService, "successUrl", "http://localhost:3000/success");
-        ReflectionTestUtils.setField(orderService, "cancelUrl", "http://localhost:3000/cancel");
+                ticketTierRepository, auditService);
     }
 
     @Test
-    void createOrder_validTier_returnsResponseWithCheckoutUrl() {
+    void createOrder_validTier_returnsResponseWithOrderId() {
         UUID tierId = UUID.randomUUID();
         UUID buyerId = UUID.randomUUID();
         TicketTier tier = buildTier(tierId, 50, 10, new BigDecimal("500.00"));
@@ -58,17 +54,13 @@ class PaymentOrderServiceTest {
         when(ticketTierRepository.findById(tierId)).thenReturn(Optional.of(tier));
         when(orderRepository.save(any())).thenReturn(savedOrder);
         when(orderItemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(razorpayService.createPaymentLink(any(), any(), any(), anyInt(), any(), any()))
-                .thenReturn("https://rzp.io/l/abc");
-        when(razorpayService.extractPaymentLinkId("https://rzp.io/l/abc")).thenReturn("abc");
 
         CreateOrderRequest request = new CreateOrderRequest(tierId, 2);
         CreateOrderResponse response = orderService.createOrder(request, buyerId);
 
         assertNotNull(response);
-        assertEquals("https://rzp.io/l/abc", response.getCheckoutUrl());
+        assertNotNull(response.getOrderId());
         verify(auditService).logOrderCreated(any(), any(), anyInt(), any());
-        verify(auditService).logPaymentLinkCreated(any(), any());
     }
 
     @Test

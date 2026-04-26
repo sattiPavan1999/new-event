@@ -75,21 +75,21 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void findByRazorpayPaymentLinkId_returnsMatchingOrder() {
+    void findByPaymentLinkId_returnsMatchingOrder() {
         UUID buyerId = UUID.randomUUID();
         Order order = saveOrder(buyerId, OrderStatus.PENDING);
-        order.setRazorpayPaymentLinkId("rpl_123abc");
+        order.setPaymentLinkId("plink_123abc");
         orderRepository.save(order);
 
-        Optional<Order> found = orderRepository.findByRazorpayPaymentLinkId("rpl_123abc");
+        Optional<Order> found = orderRepository.findByPaymentLinkId("plink_123abc");
 
         assertTrue(found.isPresent());
-        assertEquals("rpl_123abc", found.get().getRazorpayPaymentLinkId());
+        assertEquals("plink_123abc", found.get().getPaymentLinkId());
     }
 
     @Test
-    void findByRazorpayPaymentLinkId_noMatch_returnsEmpty() {
-        Optional<Order> found = orderRepository.findByRazorpayPaymentLinkId("nonexistent");
+    void findByPaymentLinkId_noMatch_returnsEmpty() {
+        Optional<Order> found = orderRepository.findByPaymentLinkId("nonexistent");
         assertFalse(found.isPresent());
     }
 
