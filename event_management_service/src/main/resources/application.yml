@@ -38,7 +38,6 @@ management:
     web:
       exposure:
         include: health,info
-      base-path: /
   endpoint:
     health:
       show-details: always
