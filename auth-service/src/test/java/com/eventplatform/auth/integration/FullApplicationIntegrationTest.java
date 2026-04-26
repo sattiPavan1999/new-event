@@ -49,33 +49,37 @@ class FullApplicationIntegrationTest {
     }
 
     @Test
-    @org.junit.jupiter.api.Disabled("Includes refresh which has timing issues in test")
     void testCompleteAuthenticationFlow() throws Exception, InterruptedException {
-        RegisterRequest registerRequest = new RegisterRequest("flow@example.com", "Flow User", "Password123", "BUYER");
-
-        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
+        // Step 1: Register
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registerRequest)))
+                        .content(objectMapper.writeValueAsString(
+                                new RegisterRequest("flow@example.com", "Flow User", "Password123", "BUYER"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.accessToken").exists())
                 .andExpect(jsonPath("$.refreshToken").exists())
+                .andExpect(jsonPath("$.user.email").value("flow@example.com"));
+
+        // Wait >1s so login's JWT has a different `iat` than the register JWT
+        Thread.sleep(1100);
+
+        // Step 2: Login — capture the login refresh token for the refresh step
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new LoginRequest("flow@example.com", "Password123"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
                 .andExpect(jsonPath("$.user.email").value("flow@example.com"))
                 .andReturn();
 
-        String registerResponseJson = registerResult.getResponse().getContentAsString();
-        AuthResponse registerResponse = objectMapper.readValue(registerResponseJson, AuthResponse.class);
+        AuthResponse loginResponse = objectMapper.readValue(
+                loginResult.getResponse().getContentAsString(), AuthResponse.class);
 
-        LoginRequest loginRequest = new LoginRequest("flow@example.com", "Password123");
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").exists())
-                .andExpect(jsonPath("$.user.email").value("flow@example.com"));
+        // Wait >1s so refresh's new JWT has a different `iat` than the login JWT
+        Thread.sleep(1100);
 
-        Thread.sleep(10);
-
-        RefreshRequest refreshRequest = new RefreshRequest(registerResponse.getRefreshToken());
+        RefreshRequest refreshRequest = new RefreshRequest(loginResponse.getRefreshToken());
         MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(refreshRequest)))

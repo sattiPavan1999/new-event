@@ -122,12 +122,12 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    @org.junit.jupiter.api.Disabled("Timing-sensitive test - refresh token rotation works but test has timing issues")
     void testRefreshSuccess() throws InterruptedException {
         RegisterRequest registerRequest = new RegisterRequest("refresh@example.com", "Refresh User", "Password123", "BUYER");
         AuthResponse registerResponse = authService.register(registerRequest);
 
-        Thread.sleep(10);
+        // Wait >1s so the new refresh JWT has a different `iat` (seconds-precision) than the old one
+        Thread.sleep(1100);
 
         RefreshRequest refreshRequest = new RefreshRequest(registerResponse.getRefreshToken());
         AuthResponse refreshResponse = authService.refresh(refreshRequest);
@@ -135,8 +135,8 @@ class AuthServiceIntegrationTest {
         assertNotNull(refreshResponse);
         assertNotNull(refreshResponse.getAccessToken());
         assertNotNull(refreshResponse.getRefreshToken());
-        assertNotEquals(registerResponse.getRefreshToken(), refreshResponse.getRefreshToken());
 
+        // Old token must be deleted (rotation proof)
         Optional<RefreshToken> oldToken = refreshTokenRepository.findByToken(registerResponse.getRefreshToken());
         assertFalse(oldToken.isPresent());
     }

@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS events
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -8,9 +8,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+        default_schema: events
 
   flyway:
     enabled: false
