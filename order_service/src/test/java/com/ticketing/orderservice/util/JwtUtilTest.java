@@ -48,7 +48,7 @@ class JwtUtilTest {
     void testGetBuyerIdFromToken() {
         UUID buyerId = UUID.randomUUID();
         String token = Jwts.builder()
-                .claim("buyer_id", buyerId.toString())
+                .setSubject(buyerId.toString())
                 .claim("role", "BUYER")
                 .setExpiration(new Date(System.currentTimeMillis() + 900000))
                 .signWith(secretKey)

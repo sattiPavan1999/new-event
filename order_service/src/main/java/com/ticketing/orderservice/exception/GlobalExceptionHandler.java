@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -23,6 +24,18 @@ public class GlobalExceptionHandler {
 
     public GlobalExceptionHandler(AuditService auditService) {
         this.auditService = auditService;
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestHeaderException(MissingRequestHeaderException ex) {
+        String traceId = MDC.get("traceId");
+        ErrorResponse error = new ErrorResponse(
+                "UNAUTHORIZED",
+                "Authorization header is required",
+                Instant.now(),
+                traceId
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
