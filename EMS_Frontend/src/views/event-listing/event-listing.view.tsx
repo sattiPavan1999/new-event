@@ -11,7 +11,7 @@ export const EventListingView: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('');
-  const [city, setCity] = useState<string>('');
+  const [city, setCity] = useState('');
   const [page, setPage] = useState(0);
 
   const { data, isLoading, error } = useQuery({
