@@ -29,6 +29,20 @@ jwt:
   access-token-expiry: ${JWT_ACCESS_EXPIRY:900000}
   refresh-token-expiry: ${JWT_REFRESH_EXPIRY:604800000}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
 logging:
   level:
     com.eventplatform.auth: INFO

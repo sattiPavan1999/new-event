@@ -8,7 +8,6 @@ import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
 import com.ticketing.orderservice.repository.OrderRepository;
 import com.ticketing.orderservice.repository.TicketTierRepository;
-import com.ticketing.orderservice.util.AuditService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

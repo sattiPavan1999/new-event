@@ -1,4 +1,4 @@
-package com.ticketing.orderservice.util;
+package com.ticketing.orderservice.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

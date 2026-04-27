@@ -5,7 +5,7 @@ import com.ticketing.orderservice.dto.*;
 import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.UnauthorizedException;
 import com.ticketing.orderservice.service.OrderService;
-import com.ticketing.orderservice.util.AuditService;
+import com.ticketing.orderservice.service.AuditService;
 import com.ticketing.orderservice.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

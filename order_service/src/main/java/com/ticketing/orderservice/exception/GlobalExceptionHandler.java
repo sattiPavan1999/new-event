@@ -1,7 +1,7 @@
 package com.ticketing.orderservice.exception;
 
 import com.ticketing.orderservice.dto.ErrorResponse;
-import com.ticketing.orderservice.util.AuditService;
+import com.ticketing.orderservice.service.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;

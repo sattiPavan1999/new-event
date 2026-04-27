@@ -8,7 +8,6 @@ import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.OrderNotFoundException;
 import com.ticketing.orderservice.repository.OrderRepository;
 import com.ticketing.orderservice.repository.TicketTierRepository;
-import com.ticketing.orderservice.util.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
