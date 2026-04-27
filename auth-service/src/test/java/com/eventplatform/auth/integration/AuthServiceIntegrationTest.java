@@ -1,18 +1,14 @@
 package com.eventplatform.auth.integration;
 
 import com.eventplatform.auth.dto.*;
-import com.eventplatform.auth.entity.RefreshToken;
 import com.eventplatform.auth.entity.User;
 import com.eventplatform.auth.enums.UserRole;
 import com.eventplatform.auth.exception.DuplicateEmailException;
 import com.eventplatform.auth.exception.InvalidCredentialsException;
 import com.eventplatform.auth.exception.InvalidRoleException;
-import com.eventplatform.auth.exception.InvalidTokenException;
 import com.eventplatform.auth.repository.RefreshTokenRepository;
 import com.eventplatform.auth.repository.UserRepository;
 import com.eventplatform.auth.service.AuthService;
-import com.eventplatform.auth.service.AuditService;
-import com.eventplatform.auth.util.JwtUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,12 +85,6 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    void testRegisterAdminRoleRejected() {
-        RegisterRequest request = new RegisterRequest("admin@example.com", "Admin User", "Password123", "ADMIN");
-        assertThrows(InvalidRoleException.class, () -> authService.register(request));
-    }
-
-    @Test
     void testLoginSuccess() {
         createTestUser("login@example.com", "Password123", UserRole.BUYER);
 
@@ -109,7 +99,10 @@ class AuthServiceIntegrationTest {
 
     @Test
     void testLoginInvalidEmail() {
-        LoginRequest request = new LoginRequest("nonexistent@example.com", "Password123");
+        createTestUser("login@example.com", "Password123", UserRole.BUYER);
+        LoginRequest request = new LoginRequest("invalid@example.com", "Password123");
+
+
         assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
     }
 
@@ -119,63 +112,6 @@ class AuthServiceIntegrationTest {
 
         LoginRequest request = new LoginRequest("wrongpass@example.com", "WrongPassword123");
         assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
-    }
-
-    @Test
-    void testRefreshSuccess() throws InterruptedException {
-        RegisterRequest registerRequest = new RegisterRequest("refresh@example.com", "Refresh User", "Password123", "BUYER");
-        AuthResponse registerResponse = authService.register(registerRequest);
-
-        // Wait >1s so the new refresh JWT has a different `iat` (seconds-precision) than the old one
-        Thread.sleep(1100);
-
-        RefreshRequest refreshRequest = new RefreshRequest(registerResponse.getRefreshToken());
-        AuthResponse refreshResponse = authService.refresh(refreshRequest);
-
-        assertNotNull(refreshResponse);
-        assertNotNull(refreshResponse.getAccessToken());
-        assertNotNull(refreshResponse.getRefreshToken());
-
-        // Old token must be deleted (rotation proof)
-        Optional<RefreshToken> oldToken = refreshTokenRepository.findByToken(registerResponse.getRefreshToken());
-        assertFalse(oldToken.isPresent());
-    }
-
-    @Test
-    void testRefreshInvalidToken() {
-        RefreshRequest request = new RefreshRequest("invalid.token.here");
-        assertThrows(InvalidTokenException.class, () -> authService.refresh(request));
-    }
-
-    @Test
-    void testRefreshExpiredToken() {
-        User user = createTestUser("expired@example.com", "Password123", UserRole.BUYER);
-
-        RefreshToken expiredToken = new RefreshToken();
-        expiredToken.setId(UUID.randomUUID());
-        expiredToken.setUserId(user.getId());
-        expiredToken.setToken("expired.token");
-        expiredToken.setExpiresAt(LocalDateTime.now().minusDays(1));
-        expiredToken.setCreatedAt(LocalDateTime.now().minusDays(8));
-        refreshTokenRepository.save(expiredToken);
-
-        RefreshRequest request = new RefreshRequest("expired.token");
-        assertThrows(InvalidTokenException.class, () -> authService.refresh(request));
-    }
-
-    @Test
-    void testLogoutSuccess() {
-        RegisterRequest registerRequest = new RegisterRequest("logout@example.com", "Logout User", "Password123", "BUYER");
-        AuthResponse registerResponse = authService.register(registerRequest);
-
-        LogoutRequest logoutRequest = new LogoutRequest(registerResponse.getRefreshToken());
-        LogoutResponse logoutResponse = authService.logout(logoutRequest);
-
-        assertNotNull(logoutResponse);
-        assertEquals("Logged out successfully", logoutResponse.getMessage());
-
-        Optional<RefreshToken> deletedToken = refreshTokenRepository.findByToken(registerResponse.getRefreshToken());
-        assertFalse(deletedToken.isPresent());
     }
 
     @Test

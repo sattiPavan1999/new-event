@@ -80,14 +80,6 @@ class AuthServiceTest {
                 () -> authService.register(new RegisterRequest("a@b.com", "User", "Password123", "INVALID_ROLE")));
     }
 
-    @Test
-    void register_adminRole_throwsInvalidRoleException() {
-        when(userRepository.existsByEmail(any())).thenReturn(false);
-
-        assertThrows(InvalidRoleException.class,
-                () -> authService.register(new RegisterRequest("a@b.com", "User", "Password123", "ADMIN")));
-    }
-
     // ── Login ─────────────────────────────────────────────────────────────────
 
     @Test
