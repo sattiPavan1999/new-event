@@ -2,41 +2,41 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { PaginatedResponse, AdminEvent } from '@/types/event'
+import type { PaginatedResponse, OrganiserEvent } from '@/types/event'
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn(),
 }))
 vi.mock('@/services/event', () => ({
-  eventService: { getAdminEvents: vi.fn() },
+  eventService: { getOrganiserEvents: vi.fn() },
 }))
-vi.mock('@/components/admin-layout', () => ({
-  AdminLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock('@/components/organiser-layout', () => ({
+  OrganiserLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
-import { AdminDashboardView } from './admin-dashboard.view'
+import { OrganiserDashboardView } from './organiser-dashboard.view'
 import { useAuth } from '@/contexts/AuthContext'
 import { eventService } from '@/services/event'
 
 const mockUseAuth = vi.mocked(useAuth)
-const mockGetAdminEvents = vi.mocked(eventService.getAdminEvents)
+const mockGetOrganiserEvents = vi.mocked(eventService.getOrganiserEvents)
 
 function renderView() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <AdminDashboardView />
+        <OrganiserDashboardView />
       </MemoryRouter>
     </QueryClientProvider>
   )
 }
 
-const emptyResponse: PaginatedResponse<AdminEvent> = {
+const emptyResponse: PaginatedResponse<OrganiserEvent> = {
   content: [], totalElements: 0, totalPages: 0,
 }
 
-const eventsResponse: PaginatedResponse<AdminEvent> = {
+const eventsResponse: PaginatedResponse<OrganiserEvent> = {
   content: [{
     id: 'evt-1',
     title: 'Summer Fest',
@@ -49,7 +49,7 @@ const eventsResponse: PaginatedResponse<AdminEvent> = {
   totalElements: 1, totalPages: 1,
 }
 
-describe('AdminDashboardView', () => {
+describe('OrganiserDashboardView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({
@@ -57,7 +57,7 @@ describe('AdminDashboardView', () => {
       isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
       login: vi.fn(), logout: vi.fn(), isLoading: false,
     })
-    mockGetAdminEvents.mockResolvedValue(emptyResponse)
+    mockGetOrganiserEvents.mockResolvedValue(emptyResponse)
   })
 
   it('renders the Dashboard heading', () => {
@@ -83,7 +83,7 @@ describe('AdminDashboardView', () => {
   })
 
   it('shows recent event title and status badge when events exist', async () => {
-    mockGetAdminEvents.mockResolvedValue(eventsResponse)
+    mockGetOrganiserEvents.mockResolvedValue(eventsResponse)
     renderView()
     await waitFor(() => {
       expect(screen.getByText('Summer Fest')).toBeInTheDocument()

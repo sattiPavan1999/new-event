@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
-import { AdminLayout } from '@/components/admin-layout';
+import { OrganiserLayout } from '@/components/organiser-layout';
 import { Button } from '@/components/button';
 import { Alert } from '@/components/alert';
 import { EventStatus } from '@/types/event';
-import type { AdminEvent } from '@/types/event';
+import type { OrganiserEvent } from '@/types/event';
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const colors: Record<string, string> = {
@@ -23,7 +23,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 
 type FilterStatus = 'ALL' | 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
 
-export const AdminEventsView: React.FC = () => {
+export const OrganiserEventsView: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
@@ -31,14 +31,14 @@ export const AdminEventsView: React.FC = () => {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminEvents', { page }],
-    queryFn: () => eventService.getAdminEvents(page, 10),
+    queryKey: ['organiserEvents', { page }],
+    queryFn: () => eventService.getOrganiserEvents(page, 10),
   });
 
   const publishMutation = useMutation({
     mutationFn: (id: string) => eventService.publishEvent(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminEvents'] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvents'] });
       setActionError(null);
     },
     onError: (err: unknown) => {
@@ -50,7 +50,7 @@ export const AdminEventsView: React.FC = () => {
   const cancelMutation = useMutation({
     mutationFn: (id: string) => eventService.cancelEvent(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminEvents'] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvents'] });
       setActionError(null);
     },
     onError: (err: unknown) => {
@@ -59,7 +59,7 @@ export const AdminEventsView: React.FC = () => {
     },
   });
 
-  const allEvents: AdminEvent[] = data?.content ?? [];
+  const allEvents: OrganiserEvent[] = data?.content ?? [];
   const events = filter === 'ALL' ? allEvents : allEvents.filter(e => e.status === filter);
 
   const formatDate = (dateString: string) =>
@@ -70,11 +70,11 @@ export const AdminEventsView: React.FC = () => {
     });
 
   return (
-    <AdminLayout>
+    <OrganiserLayout>
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Events</h1>
-          <Button onClick={() => navigate('/admin/events/create')}>+ Create Event</Button>
+          <Button onClick={() => navigate('/organiser/events/create')}>+ Create Event</Button>
         </div>
 
         {actionError && (
@@ -111,7 +111,7 @@ export const AdminEventsView: React.FC = () => {
                 {filter === 'ALL' ? 'No events yet.' : `No ${filter.toLowerCase()} events.`}
               </p>
               {filter === 'ALL' && (
-                <Button onClick={() => navigate('/admin/events/create')}>Create your first event</Button>
+                <Button onClick={() => navigate('/organiser/events/create')}>Create your first event</Button>
               )}
             </div>
           ) : (
@@ -140,7 +140,7 @@ export const AdminEventsView: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => navigate(`/admin/events/${event.id}`)}
+                          onClick={() => navigate(`/organiser/events/${event.id}`)}
                           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                         >
                           View
@@ -185,6 +185,6 @@ export const AdminEventsView: React.FC = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </OrganiserLayout>
   );
 };

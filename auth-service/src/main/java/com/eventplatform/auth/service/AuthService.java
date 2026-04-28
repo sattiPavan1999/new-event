@@ -57,11 +57,6 @@ public class AuthService {
             throw new InvalidRoleException("Invalid role. Must be BUYER or ORGANISER");
         }
 
-        if (role == UserRole.ADMIN) {
-            auditService.logRegistration(request.getEmail(), request.getRole(), false);
-            throw new InvalidRoleException("ADMIN role cannot be self-assigned");
-        }
-
         UUID userId = UUID.randomUUID();
         String passwordHash = passwordEncoder.encode(request.getPassword());
         LocalDateTime now = LocalDateTime.now();

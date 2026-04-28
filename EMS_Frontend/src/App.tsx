@@ -6,10 +6,10 @@ import BuyerRegistrationView from './views/buyer-registration';
 import OrganiserRegistrationView from './views/organiser-registration';
 import EventListingView from './views/event-listing';
 import EventDetailView from './views/event-detail';
-import { AdminDashboardView } from './views/admin-dashboard';
-import { AdminEventsView } from './views/admin-events';
-import { AdminEventDetailView } from './views/admin-event-detail';
-import { AdminEventCreateView } from './views/admin-event-create';
+import { OrganiserDashboardView } from './views/organiser-dashboard';
+import { OrganiserEventsView } from './views/organiser-events';
+import { OrganiserEventDetailView } from './views/organiser-event-detail';
+import { OrganiserEventCreateView } from './views/organiser-event-create';
 import { OrderConfirmationView } from './views/order-confirmation';
 import { MyBookingsView } from './views/my-bookings';
 import './App.css';
@@ -48,8 +48,8 @@ function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
 
   const homeRedirect = isAuthenticated
-    ? user?.role === 'ORGANISER' || user?.role === 'ADMIN'
-      ? '/admin/dashboard'
+    ? user?.role === 'ORGANISER'
+      ? '/organiser/dashboard'
       : '/events'
     : '/login';
 
@@ -66,7 +66,7 @@ function AppRoutes() {
       />
       <Route
         path="/register/organiser"
-        element={isAuthenticated ? <Navigate to="/admin/dashboard" replace /> : <OrganiserRegistrationView />}
+        element={isAuthenticated ? <Navigate to="/organiser/dashboard" replace /> : <OrganiserRegistrationView />}
       />
 
       {/* Public event routes */}
@@ -93,36 +93,36 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected admin/organiser routes */}
+      {/* Protected organiser routes */}
       <Route
-        path="/admin/dashboard"
+        path="/organiser/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['ORGANISER', 'ADMIN']}>
-            <AdminDashboardView />
+          <ProtectedRoute allowedRoles={['ORGANISER']}>
+            <OrganiserDashboardView />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/admin/events"
+        path="/organiser/events"
         element={
-          <ProtectedRoute allowedRoles={['ORGANISER', 'ADMIN']}>
-            <AdminEventsView />
+          <ProtectedRoute allowedRoles={['ORGANISER']}>
+            <OrganiserEventsView />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/admin/events/create"
+        path="/organiser/events/create"
         element={
-          <ProtectedRoute allowedRoles={['ORGANISER', 'ADMIN']}>
-            <AdminEventCreateView />
+          <ProtectedRoute allowedRoles={['ORGANISER']}>
+            <OrganiserEventCreateView />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/admin/events/:eventId"
+        path="/organiser/events/:eventId"
         element={
-          <ProtectedRoute allowedRoles={['ORGANISER', 'ADMIN']}>
-            <AdminEventDetailView />
+          <ProtectedRoute allowedRoles={['ORGANISER']}>
+            <OrganiserEventDetailView />
           </ProtectedRoute>
         }
       />

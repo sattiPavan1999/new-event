@@ -28,12 +28,12 @@ import java.util.UUID;
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
-@RequestMapping("/api/admin/events")
-public class AdminEventController {
+@RequestMapping("/api/organiser/events")
+public class OrganiserEventController {
 
     private final EventService eventService;
 
-    public AdminEventController(EventService eventService) {
+    public OrganiserEventController(EventService eventService) {
         this.eventService = eventService;
     }
 
@@ -47,10 +47,10 @@ public class AdminEventController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EventDetailResponse> getAdminEvent(
+    public ResponseEntity<EventDetailResponse> getOrganiserEvent(
             @PathVariable("id") UUID eventId,
             @RequestHeader("X-User-Id") UUID organiserId) {
-        EventDetailResponse response = eventService.getAdminEventDetail(eventId, organiserId);
+        EventDetailResponse response = eventService.getOrganiserEventDetail(eventId, organiserId);
         return ResponseEntity.ok(response);
     }
 

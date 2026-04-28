@@ -9,7 +9,7 @@ vi.mock('@/components/logout-dialog/logout-dialog', () => ({
   LogoutDialog: () => null,
 }))
 
-import { AdminLayout } from './admin-layout'
+import { OrganiserLayout } from './organiser-layout'
 import { useAuth } from '@/contexts/AuthContext'
 
 const mockUseAuth = vi.mocked(useAuth)
@@ -18,7 +18,7 @@ function renderInRouter(ui: React.ReactNode) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
 
-describe('AdminLayout', () => {
+describe('OrganiserLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({
@@ -29,28 +29,28 @@ describe('AdminLayout', () => {
   })
 
   it('renders children in the main content area', () => {
-    renderInRouter(<AdminLayout><span>page content</span></AdminLayout>)
+    renderInRouter(<OrganiserLayout><span>page content</span></OrganiserLayout>)
     expect(screen.getByText('page content')).toBeInTheDocument()
   })
 
   it('shows Dashboard and Events nav links', () => {
-    renderInRouter(<AdminLayout><span /></AdminLayout>)
+    renderInRouter(<OrganiserLayout><span /></OrganiserLayout>)
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /events/i })).toBeInTheDocument()
   })
 
   it('shows the organiser name in the sidebar', () => {
-    renderInRouter(<AdminLayout><span /></AdminLayout>)
+    renderInRouter(<OrganiserLayout><span /></OrganiserLayout>)
     expect(screen.getByText('Alice')).toBeInTheDocument()
   })
 
   it('shows the Logout button', () => {
-    renderInRouter(<AdminLayout><span /></AdminLayout>)
+    renderInRouter(<OrganiserLayout><span /></OrganiserLayout>)
     expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument()
   })
 
   it('shows the Public Site button', () => {
-    renderInRouter(<AdminLayout><span /></AdminLayout>)
+    renderInRouter(<OrganiserLayout><span /></OrganiserLayout>)
     expect(screen.getByRole('button', { name: /public site/i })).toBeInTheDocument()
   })
 })

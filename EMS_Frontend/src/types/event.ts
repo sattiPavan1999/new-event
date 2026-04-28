@@ -89,7 +89,7 @@ export interface PaginatedResponse<T> {
   pageSize?: number;
 }
 
-export interface AdminEvent {
+export interface OrganiserEvent {
   id: string;
   title: string;
   description?: string;

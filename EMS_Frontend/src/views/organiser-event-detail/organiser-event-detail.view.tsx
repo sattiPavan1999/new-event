@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
-import { AdminLayout } from '@/components/admin-layout';
+import { OrganiserLayout } from '@/components/organiser-layout';
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
 import { Alert } from '@/components/alert';
@@ -94,7 +94,7 @@ const TierFormPanel: React.FC<TierFormPanelProps> = ({ tier, eventId, onDone }) 
         ? eventService.updateTier(eventId, tier.id, buildPayload())
         : eventService.createTier(eventId, buildPayload()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminEvent', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvent', eventId] });
       onDone();
     },
     onError: (err: unknown) => {
@@ -214,7 +214,7 @@ const TierFormPanel: React.FC<TierFormPanelProps> = ({ tier, eventId, onDone }) 
 
 // ─── Main View ───────────────────────────────────────────────────────────────
 
-export const AdminEventDetailView: React.FC = () => {
+export const OrganiserEventDetailView: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -237,8 +237,8 @@ export const AdminEventDetailView: React.FC = () => {
   const [eventFormErrors, setEventFormErrors] = useState<Record<string, string>>({});
 
   const { data: event, isLoading, error } = useQuery({
-    queryKey: ['adminEvent', eventId],
-    queryFn: () => eventService.getAdminEvent(eventId!),
+    queryKey: ['organiserEvent', eventId],
+    queryFn: () => eventService.getOrganiserEvent(eventId!),
     enabled: !!eventId,
   });
 
@@ -264,8 +264,8 @@ export const AdminEventDetailView: React.FC = () => {
         bannerImageUrl: eventForm.bannerImageUrl || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminEvent', eventId] });
-      queryClient.invalidateQueries({ queryKey: ['adminEvents'] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvent', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvents'] });
       setEditingEvent(false);
       setActionSuccess('Event updated successfully');
       setActionError(null);
@@ -279,8 +279,8 @@ export const AdminEventDetailView: React.FC = () => {
   const publishMutation = useMutation({
     mutationFn: () => eventService.publishEvent(eventId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminEvent', eventId] });
-      queryClient.invalidateQueries({ queryKey: ['adminEvents'] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvent', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvents'] });
       setActionSuccess('Event published successfully');
       setActionError(null);
     },
@@ -293,8 +293,8 @@ export const AdminEventDetailView: React.FC = () => {
   const cancelMutation = useMutation({
     mutationFn: () => eventService.cancelEvent(eventId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminEvent', eventId] });
-      queryClient.invalidateQueries({ queryKey: ['adminEvents'] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvent', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvents'] });
       setActionSuccess('Event cancelled');
       setActionError(null);
     },
@@ -307,7 +307,7 @@ export const AdminEventDetailView: React.FC = () => {
   const deleteTierMutation = useMutation({
     mutationFn: (tierId: string) => eventService.deleteTier(eventId!, tierId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminEvent', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['organiserEvent', eventId] });
       queryClient.invalidateQueries({ queryKey: ['salesSummary', eventId] });
       setActionSuccess('Tier deleted');
       setActionError(null);
@@ -353,34 +353,34 @@ export const AdminEventDetailView: React.FC = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <OrganiserLayout>
         <div className="max-w-3xl mx-auto space-y-4 animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/2" />
           <div className="h-48 bg-gray-200 rounded-xl" />
           <div className="h-32 bg-gray-200 rounded-xl" />
         </div>
-      </AdminLayout>
+      </OrganiserLayout>
     );
   }
 
   if (error || !event) {
     return (
-      <AdminLayout>
+      <OrganiserLayout>
         <div className="max-w-3xl mx-auto">
           <Alert variant="error">Event not found or you don't have permission to view it.</Alert>
-          <Button className="mt-4" onClick={() => navigate('/admin/events')}>Back to Events</Button>
+          <Button className="mt-4" onClick={() => navigate('/organiser/events')}>Back to Events</Button>
         </div>
-      </AdminLayout>
+      </OrganiserLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <OrganiserLayout>
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/admin/events')} className="text-gray-400 hover:text-gray-600">
+            <button onClick={() => navigate('/organiser/events')} className="text-gray-400 hover:text-gray-600">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -652,6 +652,6 @@ export const AdminEventDetailView: React.FC = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </OrganiserLayout>
   );
 };

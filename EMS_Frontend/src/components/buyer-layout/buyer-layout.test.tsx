@@ -44,7 +44,7 @@ describe('BuyerLayout', () => {
 
   it('hides My Bookings link for non-BUYER role', () => {
     mockUseAuth.mockReturnValue({
-      user: { id: '2', email: 'a@x.com', fullName: 'Alice', role: 'ADMIN', isActive: true },
+      user: { id: '2', email: 'a@x.com', fullName: 'Alice', role: 'ORGANISER', isActive: true },
       isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
       login: vi.fn(), logout: vi.fn(), isLoading: false,
     })

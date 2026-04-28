@@ -299,7 +299,7 @@ export const EventDetailView: React.FC = () => {
                   </Button>
                 ) : (
                   <p className="text-sm text-center text-gray-400 py-2">
-                    Admins and organisers cannot purchase tickets.
+                    Organisers cannot purchase tickets.
                   </p>
                 )}
               </div>

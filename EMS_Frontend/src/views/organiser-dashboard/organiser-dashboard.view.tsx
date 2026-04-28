@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
 import { useAuth } from '@/contexts/AuthContext';
-import { AdminLayout } from '@/components/admin-layout';
+import { OrganiserLayout } from '@/components/organiser-layout';
 import { Button } from '@/components/button';
 import { EventStatus } from '@/types/event';
-import type { AdminEvent } from '@/types/event';
+import type { OrganiserEvent } from '@/types/event';
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const colors: Record<string, string> = {
@@ -21,16 +21,16 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   );
 };
 
-export const AdminDashboardView: React.FC = () => {
+export const OrganiserDashboardView: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminEvents', { page: 0, size: 100 }],
-    queryFn: () => eventService.getAdminEvents(0, 100),
+    queryKey: ['organiserEvents', { page: 0, size: 100 }],
+    queryFn: () => eventService.getOrganiserEvents(0, 100),
   });
 
-  const events: AdminEvent[] = data?.content ?? [];
+  const events: OrganiserEvent[] = data?.content ?? [];
 
   const stats = {
     total: events.length,
@@ -51,14 +51,14 @@ export const AdminDashboardView: React.FC = () => {
     });
 
   return (
-    <AdminLayout>
+    <OrganiserLayout>
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-500 mt-1">Welcome back, {user?.fullName}</p>
           </div>
-          <Button onClick={() => navigate('/admin/events/create')}>
+          <Button onClick={() => navigate('/organiser/events/create')}>
             + Create Event
           </Button>
         </div>
@@ -87,7 +87,7 @@ export const AdminDashboardView: React.FC = () => {
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold text-gray-900">Recent Events</h2>
             <button
-              onClick={() => navigate('/admin/events')}
+              onClick={() => navigate('/organiser/events')}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
               View all
@@ -103,7 +103,7 @@ export const AdminDashboardView: React.FC = () => {
           ) : recentEvents.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-gray-500 mb-4">No events yet.</p>
-              <Button onClick={() => navigate('/admin/events/create')}>Create your first event</Button>
+              <Button onClick={() => navigate('/organiser/events/create')}>Create your first event</Button>
             </div>
           ) : (
             <ul className="divide-y divide-gray-50">
@@ -111,7 +111,7 @@ export const AdminDashboardView: React.FC = () => {
                 <li
                   key={event.id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 cursor-pointer"
-                  onClick={() => navigate(`/admin/events/${event.id}`)}
+                  onClick={() => navigate(`/organiser/events/${event.id}`)}
                 >
                   <div>
                     <p className="text-sm font-medium text-gray-900">{event.title}</p>
@@ -129,6 +129,6 @@ export const AdminDashboardView: React.FC = () => {
           )}
         </div>
       </div>
-    </AdminLayout>
+    </OrganiserLayout>
   );
 };

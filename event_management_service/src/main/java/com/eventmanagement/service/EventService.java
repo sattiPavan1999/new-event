@@ -367,7 +367,7 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public EventDetailResponse getAdminEventDetail(UUID eventId, UUID organiserId) {
+    public EventDetailResponse getOrganiserEventDetail(UUID eventId, UUID organiserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
         validateEventOwnership(event, organiserId);

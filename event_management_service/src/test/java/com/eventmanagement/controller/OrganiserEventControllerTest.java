@@ -24,8 +24,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AdminEventController.class)
-class AdminEventControllerTest {
+@WebMvcTest(OrganiserEventController.class)
+class OrganiserEventControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
@@ -59,7 +59,7 @@ class AdminEventControllerTest {
         request.setEventDate(LocalDateTime.now().plusDays(30));
         request.setVenueId(UUID.randomUUID());
 
-        mockMvc.perform(post("/api/admin/events")
+        mockMvc.perform(post("/api/organiser/events")
                         .header("X-User-Id", organiserId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -74,22 +74,22 @@ class AdminEventControllerTest {
                 Collections.emptyList(), 0, 10, 0L, 0);
         when(eventService.getOrganizerEvents(any(), anyInt(), anyInt())).thenReturn(page);
 
-        mockMvc.perform(get("/api/admin/events")
+        mockMvc.perform(get("/api/organiser/events")
                         .header("X-User-Id", organiserId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test
-    void getAdminEvent_returnsOk() throws Exception {
+    void getOrganiserEvent_returnsOk() throws Exception {
         EventDetailResponse detail = new EventDetailResponse();
         detail.setId(eventId);
         detail.setTitle("Test Event");
         detail.setStatus(EventStatus.DRAFT);
         detail.setTiers(Collections.emptyList());
-        when(eventService.getAdminEventDetail(any(), any())).thenReturn(detail);
+        when(eventService.getOrganiserEventDetail(any(), any())).thenReturn(detail);
 
-        mockMvc.perform(get("/api/admin/events/{id}", eventId)
+        mockMvc.perform(get("/api/organiser/events/{id}", eventId)
                         .header("X-User-Id", organiserId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Test Event"));
@@ -101,7 +101,7 @@ class AdminEventControllerTest {
         published.setStatus(EventStatus.PUBLISHED);
         when(eventService.publishEvent(any(), any())).thenReturn(published);
 
-        mockMvc.perform(patch("/api/admin/events/{id}/publish", eventId)
+        mockMvc.perform(patch("/api/organiser/events/{id}/publish", eventId)
                         .header("X-User-Id", organiserId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PUBLISHED"));
@@ -112,7 +112,7 @@ class AdminEventControllerTest {
         when(eventService.publishEvent(any(), any()))
                 .thenThrow(new BusinessRuleViolationException("No active tiers"));
 
-        mockMvc.perform(patch("/api/admin/events/{id}/publish", eventId)
+        mockMvc.perform(patch("/api/organiser/events/{id}/publish", eventId)
                         .header("X-User-Id", organiserId.toString()))
                 .andExpect(status().isBadRequest());
     }
@@ -123,7 +123,7 @@ class AdminEventControllerTest {
         cancelled.setStatus(EventStatus.CANCELLED);
         when(eventService.cancelEvent(any(), any())).thenReturn(cancelled);
 
-        mockMvc.perform(patch("/api/admin/events/{id}/cancel", eventId)
+        mockMvc.perform(patch("/api/organiser/events/{id}/cancel", eventId)
                         .header("X-User-Id", organiserId.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
@@ -146,7 +146,7 @@ class AdminEventControllerTest {
         request.setPrice(new BigDecimal("500.00"));
         request.setTotalQty(100);
 
-        mockMvc.perform(post("/api/admin/events/{id}/tiers", eventId)
+        mockMvc.perform(post("/api/organiser/events/{id}/tiers", eventId)
                         .header("X-User-Id", organiserId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -155,11 +155,11 @@ class AdminEventControllerTest {
     }
 
     @Test
-    void getAdminEvent_notFound_returnsNotFound() throws Exception {
-        when(eventService.getAdminEventDetail(any(), any()))
+    void getOrganiserEvent_notFound_returnsNotFound() throws Exception {
+        when(eventService.getOrganiserEventDetail(any(), any()))
                 .thenThrow(new ResourceNotFoundException("Event not found"));
 
-        mockMvc.perform(get("/api/admin/events/{id}", UUID.randomUUID())
+        mockMvc.perform(get("/api/organiser/events/{id}", UUID.randomUUID())
                         .header("X-User-Id", organiserId.toString()))
                 .andExpect(status().isNotFound());
     }

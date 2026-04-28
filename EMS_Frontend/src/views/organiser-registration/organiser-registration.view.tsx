@@ -27,8 +27,8 @@ export const OrganiserRegistrationView: React.FC = () => {
       // Store auth state
       setAuthState(data);
 
-      // Redirect to admin dashboard
-      navigate('/admin/dashboard');
+      // Redirect to organiser dashboard
+      navigate('/organiser/dashboard');
     },
     onError: (error: any) => {
       if (error.response?.status === 409) {

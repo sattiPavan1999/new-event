@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
-import { AdminLayout } from '@/components/admin-layout';
+import { OrganiserLayout } from '@/components/organiser-layout';
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
 import { Alert } from '@/components/alert';
 import { EventCategory } from '@/types/event';
 
-export const AdminEventCreateView: React.FC = () => {
+export const OrganiserEventCreateView: React.FC = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     title: '',
@@ -37,7 +37,7 @@ export const AdminEventCreateView: React.FC = () => {
         bannerImageUrl: form.bannerImageUrl || undefined,
       }),
     onSuccess: (event) => {
-      navigate(`/admin/events/${event.id}`);
+      navigate(`/organiser/events/${event.id}`);
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -67,11 +67,11 @@ export const AdminEventCreateView: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <OrganiserLayout>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <button
-            onClick={() => navigate('/admin/events')}
+            onClick={() => navigate('/organiser/events')}
             className="text-gray-400 hover:text-gray-600"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,12 +163,12 @@ export const AdminEventCreateView: React.FC = () => {
             <Button type="submit" isLoading={createMutation.isPending}>
               Create Event
             </Button>
-            <Button type="button" variant="secondary" onClick={() => navigate('/admin/events')}>
+            <Button type="button" variant="secondary" onClick={() => navigate('/organiser/events')}>
               Cancel
             </Button>
           </div>
         </form>
       </div>
-    </AdminLayout>
+    </OrganiserLayout>
   );
 };

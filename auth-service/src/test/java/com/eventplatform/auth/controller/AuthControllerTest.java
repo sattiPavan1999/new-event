@@ -89,7 +89,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new RegisterRequest("a@b.com", "User", "Password123", "ADMIN"))))
+                                new RegisterRequest("a@b.com", "User", "Password123", "SUPERUSER"))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("INVALID_ROLE"));
     }
