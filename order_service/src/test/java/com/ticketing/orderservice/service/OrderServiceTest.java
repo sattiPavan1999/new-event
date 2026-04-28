@@ -7,7 +7,6 @@ import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
 import com.ticketing.orderservice.repository.OrderRepository;
 import com.ticketing.orderservice.repository.TicketTierRepository;
-import com.ticketing.orderservice.service.AuditService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

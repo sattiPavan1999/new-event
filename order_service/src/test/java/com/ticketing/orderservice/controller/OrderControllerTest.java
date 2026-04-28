@@ -2,7 +2,6 @@ package com.ticketing.orderservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketing.orderservice.dto.*;
-import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.UnauthorizedException;
 import com.ticketing.orderservice.service.OrderService;
 import com.ticketing.orderservice.service.AuditService;
@@ -10,8 +9,8 @@ import com.ticketing.orderservice.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -30,9 +29,9 @@ class OrderControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-    @MockBean private OrderService orderService;
-    @MockBean private JwtUtil jwtUtil;
-    @MockBean private AuditService auditService;
+    @MockitoBean private OrderService orderService;
+    @MockitoBean private JwtUtil jwtUtil;
+    @MockitoBean private AuditService auditService;
 
     private final UUID buyerId = UUID.randomUUID();
     private final String authHeader = "Bearer valid.jwt.token";
