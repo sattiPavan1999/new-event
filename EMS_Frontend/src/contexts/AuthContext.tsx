@@ -12,6 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (authData: AuthResponse) => void;
   logout: () => void;
+  updateWalletBalance: (newBalance: number) => void;
   isLoading: boolean;
 }
 
@@ -45,6 +46,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('refreshToken', authData.refreshToken);
   };
 
+  const updateWalletBalance = (newBalance: number) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, walletBalance: newBalance };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const logout = () => {
     setUser(null);
     setAccessToken(null);
@@ -62,6 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticated: !!user && !!accessToken,
     login,
     logout,
+    updateWalletBalance,
     isLoading: false,
   };
 

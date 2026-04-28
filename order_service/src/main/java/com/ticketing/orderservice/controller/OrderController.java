@@ -1,5 +1,6 @@
 package com.ticketing.orderservice.controller;
 
+import com.ticketing.orderservice.dto.CancelOrderResponse;
 import com.ticketing.orderservice.dto.CreateOrderRequest;
 import com.ticketing.orderservice.dto.CreateOrderResponse;
 import com.ticketing.orderservice.dto.OrderDetailResponse;
@@ -62,6 +63,19 @@ public class OrderController {
         UUID buyerId = jwtUtil.getBuyerIdFromToken(token);
 
         OrderDetailResponse response = orderService.getOrderById(id, buyerId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<CancelOrderResponse> cancelOrder(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String authorizationHeader) {
+
+        String token = extractToken(authorizationHeader);
+        jwtUtil.validateBuyerRole(token);
+        UUID buyerId = jwtUtil.getBuyerIdFromToken(token);
+
+        CancelOrderResponse response = orderService.cancelOrder(id, buyerId);
         return ResponseEntity.ok(response);
     }
 

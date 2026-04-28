@@ -1,5 +1,6 @@
 package com.eventplatform.auth.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ public class UserDto {
     private String role;
     private Boolean isActive;
     private LocalDateTime createdAt;
+    private BigDecimal walletBalance;
 
     public UserDto() {
     }
@@ -70,5 +72,13 @@ public class UserDto {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public BigDecimal getWalletBalance() {
+        return walletBalance;
+    }
+
+    public void setWalletBalance(BigDecimal walletBalance) {
+        this.walletBalance = walletBalance;
     }
 }

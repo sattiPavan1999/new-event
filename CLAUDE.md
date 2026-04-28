@@ -82,6 +82,25 @@ Cross-schema relationships are enforced at the application layer, not via foreig
 1. Buyer calls `POST /api/orders` → Order Service creates an order and decrements ticket inventory in the `events` schema.
 2. Order items snapshot event/tier data at purchase time for immutable history.
 
+### Implemented Buyer Features
+
+Three buyer-facing features were added in commit `9129a74`:
+
+1. **Ticket Booking (Buy Now)** — `src/views/event-detail/event-detail.view.tsx`
+   - Buyers select quantities per tier and click Buy Now.
+   - Calls `POST /api/orders` via `orderService.createOrder`.
+   - Redirects to the Order Confirmation page on success.
+   - Unauthenticated users are redirected to `/login`; organisers see the page read-only.
+
+2. **Order Confirmation** — `src/views/order-confirmation/order-confirmation.view.tsx`
+   - Shown at `/orders/:orderId` (BUYER-protected route).
+   - Fetches order details via `GET /api/orders/:orderId` and displays a summary.
+
+3. **My Bookings** — `src/views/my-bookings/my-bookings.view.tsx`
+   - Shown at `/my-bookings` (BUYER-protected route).
+   - Fetches paginated order history via `GET /api/orders/my-orders`.
+   - Displays each booking with event name, tier breakdown, status badge, and date.
+
 ### Frontend Structure
 
 ```

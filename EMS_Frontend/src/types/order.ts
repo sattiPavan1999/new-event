@@ -19,6 +19,7 @@ export interface CreateOrderResponse {
   status: string;
   totalAmount: number;
   items: OrderItemResponse[];
+  remainingBalance?: number;
 }
 
 export interface OrderConfirmationState {
@@ -57,4 +58,11 @@ export interface OrderHistoryResponse {
   size: number;
   totalElements: number;
   totalPages: number;
+}
+
+export interface CancelOrderResponse {
+  orderId: string;
+  status: string;
+  message: string;
+  remainingBalance?: number;
 }

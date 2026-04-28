@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
 import { orderService } from '@/services/order';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,12 +43,14 @@ const BADGE_STYLES: Record<Exclude<TierUIStatus, 'AVAILABLE'>, { label: string; 
 export const EventDetailView: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateWalletBalance } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['event', eventId],
     queryFn: () => eventService.getPublicEvent(eventId!),
     enabled: !!eventId,
+    refetchInterval: 30_000,
   });
 
   const [ticketSelections, setTicketSelections] = useState<Record<string, number>>({});
@@ -89,6 +91,11 @@ export const EventDetailView: React.FC = () => {
         .map((tier) => ({ tierId: tier.id, quantity: ticketSelections[tier.id] }));
 
       const response = await orderService.createOrder({ eventId: event.id, items });
+
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      if (response.remainingBalance !== undefined) {
+        updateWalletBalance(response.remainingBalance);
+      }
 
       const confirmationItems = event.tiers
         .filter((tier) => (ticketSelections[tier.id] ?? 0) > 0)
@@ -261,7 +268,8 @@ export const EventDetailView: React.FC = () => {
                           </p>
                         )}
 
-                        <p className="text-xs text-gray-500 mb-3">
+                        <p className="text-xs text-gray-500 mb-3 flex items-center gap-1.5">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" title="Updates every 30s" />
                           {tier.remainingQty} of {tier.totalQty} remaining
                           {tier.maxPerOrder > 0 && ` · max ${tier.maxPerOrder} per order`}
                         </p>

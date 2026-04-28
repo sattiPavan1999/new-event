@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orderService } from '@/services/order';
+import { useAuth } from '@/contexts/AuthContext';
 import { BuyerLayout } from '@/components/buyer-layout';
 import { Button } from '@/components/button';
 import { Alert } from '@/components/alert';
@@ -18,13 +19,45 @@ const formatDate = (dateString: string) =>
     day: 'numeric',
   });
 
+const canCancel = (eventDate: string) =>
+  new Date(eventDate).getTime() - Date.now() > 24 * 60 * 60 * 1000;
+
 export const MyBookingsView: React.FC = () => {
   const navigate = useNavigate();
+  const { updateWalletBalance } = useAuth();
+  const queryClient = useQueryClient();
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery<OrderHistoryResponse>({
     queryKey: ['myBookings'],
     queryFn: () => orderService.getMyBookings(),
   });
+
+  const cancelMutation = useMutation({
+    mutationFn: (orderId: string) => orderService.cancelOrder(orderId),
+    onSuccess: (response) => {
+      setCancellingOrderId(null);
+      setCancelError(null);
+      if (response.remainingBalance !== undefined) {
+        updateWalletBalance(response.remainingBalance);
+      }
+      queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      setCancellingOrderId(null);
+      setCancelError(
+        err.response?.data?.message ?? 'Failed to cancel order. Please try again.',
+      );
+    },
+  });
+
+  const handleCancel = (orderId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    setCancelError(null);
+    setCancellingOrderId(orderId);
+    cancelMutation.mutate(orderId);
+  };
 
   return (
     <BuyerLayout>
@@ -53,6 +86,11 @@ export const MyBookingsView: React.FC = () => {
           </div>
         )}
 
+        {/* Cancel error */}
+        {cancelError && (
+          <Alert variant="error" className="mb-4">{cancelError}</Alert>
+        )}
+
         {/* Empty state */}
         {!isLoading && !error && data && data.content.length === 0 && (
           <div className="text-center py-16">
@@ -67,6 +105,10 @@ export const MyBookingsView: React.FC = () => {
             {data.content.map((order) => {
               const firstItem = order.items[0];
               const totalTickets = order.items.reduce((sum, item) => sum + item.quantity, 0);
+              const showCancel =
+                order.status === 'CONFIRMED' &&
+                firstItem?.eventDate != null &&
+                canCancel(firstItem.eventDate);
 
               return (
                 <div key={order.orderId} className="bg-white rounded-lg shadow p-6">
@@ -100,12 +142,23 @@ export const MyBookingsView: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Footer: total tickets + total amount */}
+                  {/* Footer: total tickets + total amount + cancel */}
                   <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between items-center">
                     <span className="text-sm text-gray-500">
                       {totalTickets} ticket{totalTickets !== 1 ? 's' : ''}
                     </span>
-                    <span className="font-semibold text-gray-900">{formatPrice(order.totalAmount)}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-gray-900">{formatPrice(order.totalAmount)}</span>
+                      {showCancel && (
+                        <Button
+                          variant="danger"
+                          disabled={cancellingOrderId === order.orderId}
+                          onClick={() => handleCancel(order.orderId)}
+                        >
+                          {cancellingOrderId === order.orderId ? 'Cancelling…' : 'Cancel Order'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

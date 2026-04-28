@@ -167,6 +167,7 @@ class AuthServiceIntegrationTest {
         user.setRole(role);
         user.setIsActive(true);
         user.setCreatedAt(LocalDateTime.now());
+        user.setWalletBalance(new java.math.BigDecimal("10000.00"));
         return userRepository.save(user);
     }
 }

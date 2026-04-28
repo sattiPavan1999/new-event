@@ -32,7 +32,7 @@ describe('LoginView', () => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({
       user: null, isAuthenticated: false, accessToken: null, refreshToken: null,
-      login: vi.fn(), logout: vi.fn(), isLoading: false,
+      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
   })
 

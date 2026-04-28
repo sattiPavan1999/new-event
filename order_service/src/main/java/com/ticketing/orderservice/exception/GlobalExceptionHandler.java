@@ -133,6 +133,36 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(OrderCancellationNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handleOrderCancellationNotAllowedException(OrderCancellationNotAllowedException ex) {
+        String traceId = MDC.get("traceId");
+        logger.error("Order cancellation not allowed", ex);
+        auditService.logError("CANCELLATION_NOT_ALLOWED", ex.getMessage());
+
+        ErrorResponse error = new ErrorResponse(
+                "CANCELLATION_NOT_ALLOWED",
+                ex.getMessage(),
+                Instant.now(),
+                traceId
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(InsufficientWalletBalanceException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientWalletBalanceException(InsufficientWalletBalanceException ex) {
+        String traceId = MDC.get("traceId");
+        logger.error("Insufficient wallet balance", ex);
+        auditService.logError("INSUFFICIENT_BALANCE", ex.getMessage());
+
+        ErrorResponse error = new ErrorResponse(
+                "INSUFFICIENT_BALANCE",
+                ex.getMessage(),
+                Instant.now(),
+                traceId
+        );
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(error);
+    }
+
     @ExceptionHandler(PaymentServiceException.class)
     public ResponseEntity<ErrorResponse> handlePaymentServiceException(PaymentServiceException ex) {
         String traceId = MDC.get("traceId");

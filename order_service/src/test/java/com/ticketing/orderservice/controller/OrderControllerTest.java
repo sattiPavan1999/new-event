@@ -2,6 +2,8 @@ package com.ticketing.orderservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticketing.orderservice.dto.*;
+import com.ticketing.orderservice.exception.InsufficientWalletBalanceException;
+import com.ticketing.orderservice.exception.OrderCancellationNotAllowedException;
 import com.ticketing.orderservice.exception.UnauthorizedException;
 import com.ticketing.orderservice.service.OrderService;
 import com.ticketing.orderservice.service.AuditService;
@@ -118,5 +120,54 @@ class OrderControllerTest {
     void getMyOrders_missingAuth_returnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/orders/my"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cancelOrder_validRequest_returnsOk() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        CancelOrderResponse response = new CancelOrderResponse(
+                orderId, "CANCELLED", "Order cancelled. ₹3000.00 credited back to your wallet within 1 day.",
+                new BigDecimal("7000.00"));
+
+        when(jwtUtil.getBuyerIdFromToken("valid.jwt.token")).thenReturn(buyerId);
+        when(orderService.cancelOrder(orderId, buyerId)).thenReturn(response);
+
+        mockMvc.perform(post("/api/orders/{id}/cancel", orderId)
+                        .header("Authorization", authHeader))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.orderId").value(orderId.toString()));
+    }
+
+    @Test
+    void cancelOrder_missingAuth_returnsUnauthorized() throws Exception {
+        mockMvc.perform(post("/api/orders/{id}/cancel", UUID.randomUUID()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cancelOrder_notAllowed_returnsConflict() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        when(jwtUtil.getBuyerIdFromToken("valid.jwt.token")).thenReturn(buyerId);
+        when(orderService.cancelOrder(orderId, buyerId))
+                .thenThrow(new OrderCancellationNotAllowedException(orderId, "only CONFIRMED orders can be cancelled"));
+
+        mockMvc.perform(post("/api/orders/{id}/cancel", orderId)
+                        .header("Authorization", authHeader))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value("CANCELLATION_NOT_ALLOWED"));
+    }
+
+    @Test
+    void cancelOrder_insufficientBalance_returnsPaymentRequired() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        when(jwtUtil.getBuyerIdFromToken("valid.jwt.token")).thenReturn(buyerId);
+        when(orderService.cancelOrder(orderId, buyerId))
+                .thenThrow(new InsufficientWalletBalanceException(new BigDecimal("500.00")));
+
+        mockMvc.perform(post("/api/orders/{id}/cancel", orderId)
+                        .header("Authorization", authHeader))
+                .andExpect(status().isPaymentRequired())
+                .andExpect(jsonPath("$.errorCode").value("INSUFFICIENT_BALANCE"));
     }
 }

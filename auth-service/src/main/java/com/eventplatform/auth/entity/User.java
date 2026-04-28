@@ -2,6 +2,7 @@ package com.eventplatform.auth.entity;
 
 import com.eventplatform.auth.enums.UserRole;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -31,6 +32,9 @@ public class User {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "wallet_balance", nullable = false, precision = 10, scale = 2)
+    private BigDecimal walletBalance;
 
     public User() {
     }
@@ -99,5 +103,13 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public BigDecimal getWalletBalance() {
+        return walletBalance;
+    }
+
+    public void setWalletBalance(BigDecimal walletBalance) {
+        this.walletBalance = walletBalance;
     }
 }

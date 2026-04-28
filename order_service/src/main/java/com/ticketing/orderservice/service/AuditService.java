@@ -30,6 +30,10 @@ public class AuditService {
         auditLogger.info("ORDER_CONFIRMED - orderId={}", maskUuid(orderId));
     }
 
+    public void logOrderCancelled(UUID orderId) {
+        auditLogger.info("ORDER_CANCELLED - orderId={}", maskUuid(orderId));
+    }
+
     public void logOrderFailed(UUID orderId, String reason) {
         auditLogger.info("ORDER_FAILED - orderId={}, reason={}", maskUuid(orderId), reason);
     }

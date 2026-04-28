@@ -69,6 +69,7 @@ public class AuthService {
         user.setRole(role);
         user.setIsActive(true);
         user.setCreatedAt(now);
+        user.setWalletBalance(new java.math.BigDecimal("10000.00"));
 
         userRepository.save(user);
 
@@ -183,6 +184,7 @@ public class AuthService {
         userDto.setRole(user.getRole().name());
         userDto.setIsActive(user.getIsActive());
         userDto.setCreatedAt(user.getCreatedAt());
+        userDto.setWalletBalance(user.getWalletBalance());
 
         return new AuthResponse(accessToken, refreshToken, userDto);
     }

@@ -39,6 +39,11 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children }) => {
           {isAuthenticated && user ? (
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">Hi, {user.fullName}</span>
+              {user.role === 'BUYER' && user.walletBalance !== undefined && (
+                <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                  ₹{user.walletBalance.toLocaleString('en-IN')}
+                </span>
+              )}
               <button
                 onClick={() => setIsLogoutOpen(true)}
                 className="text-sm font-medium text-red-600 hover:text-red-800 transition-colors"

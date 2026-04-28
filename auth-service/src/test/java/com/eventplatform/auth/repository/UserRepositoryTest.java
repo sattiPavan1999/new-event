@@ -31,6 +31,7 @@ class UserRepositoryTest {
         user.setRole(UserRole.BUYER);
         user.setIsActive(true);
         user.setCreatedAt(LocalDateTime.now());
+        user.setWalletBalance(new java.math.BigDecimal("10000.00"));
         return userRepository.save(user);
     }
 
@@ -68,6 +69,7 @@ class UserRepositoryTest {
         UUID id = UUID.randomUUID();
         User user = new User(id, "save@example.com", "$2a$12$hash", "Full Name",
                 UserRole.ORGANISER, true, LocalDateTime.now());
+        user.setWalletBalance(new java.math.BigDecimal("10000.00"));
         userRepository.save(user);
 
         Optional<User> found = userRepository.findById(id);

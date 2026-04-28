@@ -5,6 +5,7 @@ export interface User {
   role: 'BUYER' | 'ORGANISER';
   isActive: boolean;
   createdAt?: string;
+  walletBalance?: number;
 }
 
 export interface AuthResponse {

@@ -5,16 +5,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { OrderHistoryResponse } from '@/types/order'
 
 vi.mock('@/services/order', () => ({
-  orderService: { getMyBookings: vi.fn() },
+  orderService: { getMyBookings: vi.fn(), cancelOrder: vi.fn() },
 }))
 vi.mock('@/components/buyer-layout', () => ({
   BuyerLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: vi.fn() }))
 
 import { MyBookingsView } from './my-bookings.view'
 import { orderService } from '@/services/order'
+import { useAuth } from '@/contexts/AuthContext'
 
 const mockGetMyBookings = vi.mocked(orderService.getMyBookings)
+const mockUseAuth = vi.mocked(useAuth)
 
 function renderView() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -51,7 +54,14 @@ const bookingResponse: OrderHistoryResponse = {
 }
 
 describe('MyBookingsView', () => {
-  beforeEach(() => { vi.clearAllMocks() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockUseAuth.mockReturnValue({
+      user: { id: 'u1', email: 'b@x.com', fullName: 'Bob', role: 'BUYER', isActive: true },
+      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
+      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+    })
+  })
 
   it('shows the My Bookings heading immediately', () => {
     mockGetMyBookings.mockResolvedValue(emptyResponse)

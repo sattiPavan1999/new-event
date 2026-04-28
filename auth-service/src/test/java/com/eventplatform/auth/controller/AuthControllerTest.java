@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -39,6 +40,7 @@ class AuthControllerTest {
         u.setRole("BUYER");
         u.setIsActive(true);
         u.setCreatedAt(LocalDateTime.now());
+        u.setWalletBalance(new BigDecimal("10000.00"));
         return u;
     }
 
@@ -140,6 +142,18 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(new RefreshRequest("bad.token"))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.errorCode").value("INVALID_TOKEN"));
+    }
+
+    @Test
+    void register_returnsWalletBalance() throws Exception {
+        when(authService.register(any())).thenReturn(sampleAuthResponse());
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RegisterRequest("test@example.com", "Test User", "Password123", "BUYER"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.user.walletBalance").value(10000.00));
     }
 
     @Test

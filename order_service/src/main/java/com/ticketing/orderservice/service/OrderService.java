@@ -8,6 +8,7 @@ import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
 import com.ticketing.orderservice.repository.OrderRepository;
 import com.ticketing.orderservice.repository.TicketTierRepository;
+import com.ticketing.orderservice.repository.WalletRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +33,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final EventServiceClient eventServiceClient;
     private final TicketTierRepository ticketTierRepository;
+    private final WalletRepository walletRepository;
     private final AuditService auditService;
 
     @Value("${mock.payment.checkout:false}")
@@ -39,10 +42,12 @@ public class OrderService {
     public OrderService(OrderRepository orderRepository,
                         EventServiceClient eventServiceClient,
                         TicketTierRepository ticketTierRepository,
+                        WalletRepository walletRepository,
                         AuditService auditService) {
         this.orderRepository = orderRepository;
         this.eventServiceClient = eventServiceClient;
         this.ticketTierRepository = ticketTierRepository;
+        this.walletRepository = walletRepository;
         this.auditService = auditService;
     }
 
@@ -112,6 +117,10 @@ public class OrderService {
         auditService.logOrderCreated(orderId, buyerId, request.getItems().size(), totalAmount.toString());
 
         if (mockPaymentCheckout) {
+            int debited = walletRepository.debitWallet(buyerId, totalAmount);
+            if (debited == 0) {
+                throw new InsufficientWalletBalanceException(totalAmount);
+            }
             for (OrderItem item : order.getItems()) {
                 ticketTierRepository.decrementRemainingQty(item.getTierId(), item.getQuantity());
             }
@@ -119,10 +128,54 @@ public class OrderService {
             order.setUpdatedAt(Instant.now());
             orderRepository.save(order);
             auditService.logOrderConfirmed(orderId);
-            return new CreateOrderResponse(orderId, OrderStatus.CONFIRMED.name(), totalAmount, responseItems);
+            BigDecimal remainingBalance = walletRepository.getBalance(buyerId);
+            return new CreateOrderResponse(orderId, OrderStatus.CONFIRMED.name(), totalAmount, responseItems, remainingBalance);
         }
 
         return new CreateOrderResponse(orderId, OrderStatus.PENDING.name(), totalAmount, responseItems);
+    }
+
+    @Transactional
+    public CancelOrderResponse cancelOrder(UUID orderId, UUID buyerId) {
+        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
+                .orElseThrow(() -> {
+                    if (orderRepository.existsById(orderId)) {
+                        throw new OrderAccessDeniedException(orderId);
+                    }
+                    throw new OrderNotFoundException(orderId);
+                });
+
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new OrderCancellationNotAllowedException(orderId,
+                    "only CONFIRMED orders can be cancelled");
+        }
+
+        Instant eventDate = order.getItems().stream()
+                .map(OrderItem::getEventDate)
+                .findFirst()
+                .orElseThrow(() -> new OrderCancellationNotAllowedException(orderId, "no items found"));
+
+        if (Instant.now().isAfter(eventDate.minus(24, ChronoUnit.HOURS))) {
+            throw new OrderCancellationNotAllowedException(orderId,
+                    "cancellation is not allowed within 24 hours of the event");
+        }
+
+        for (OrderItem item : order.getItems()) {
+            ticketTierRepository.incrementRemainingQty(item.getTierId(), item.getQuantity());
+        }
+
+        walletRepository.creditWallet(buyerId, order.getTotalAmount());
+
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setUpdatedAt(Instant.now());
+        orderRepository.save(order);
+
+        auditService.logOrderCancelled(orderId);
+
+        BigDecimal remainingBalance = walletRepository.getBalance(buyerId);
+        String message = "Order cancelled. ₹" + order.getTotalAmount() +
+                " credited back to your wallet within 1 day.";
+        return new CancelOrderResponse(orderId, "CANCELLED", message, remainingBalance);
     }
 
     @Transactional(readOnly = true)

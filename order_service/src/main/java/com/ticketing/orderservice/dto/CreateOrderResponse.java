@@ -10,6 +10,7 @@ public class CreateOrderResponse {
     private String status;
     private BigDecimal totalAmount;
     private List<OrderItemResponse> items;
+    private BigDecimal remainingBalance;
 
     public CreateOrderResponse() {
     }
@@ -19,6 +20,14 @@ public class CreateOrderResponse {
         this.status = status;
         this.totalAmount = totalAmount;
         this.items = items;
+    }
+
+    public CreateOrderResponse(UUID orderId, String status, BigDecimal totalAmount, List<OrderItemResponse> items, BigDecimal remainingBalance) {
+        this.orderId = orderId;
+        this.status = status;
+        this.totalAmount = totalAmount;
+        this.items = items;
+        this.remainingBalance = remainingBalance;
     }
 
     public UUID getOrderId() {
@@ -51,5 +60,13 @@ public class CreateOrderResponse {
 
     public void setItems(List<OrderItemResponse> items) {
         this.items = items;
+    }
+
+    public BigDecimal getRemainingBalance() {
+        return remainingBalance;
+    }
+
+    public void setRemainingBalance(BigDecimal remainingBalance) {
+        this.remainingBalance = remainingBalance;
     }
 }

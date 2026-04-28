@@ -3,10 +3,12 @@ package com.ticketing.orderservice.service;
 import com.ticketing.orderservice.client.EventServiceClient;
 import com.ticketing.orderservice.dto.*;
 import com.ticketing.orderservice.entity.Order;
+import com.ticketing.orderservice.entity.OrderItem;
 import com.ticketing.orderservice.entity.OrderStatus;
 import com.ticketing.orderservice.exception.*;
 import com.ticketing.orderservice.repository.OrderRepository;
 import com.ticketing.orderservice.repository.TicketTierRepository;
+import com.ticketing.orderservice.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +36,7 @@ class OrderServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private EventServiceClient eventServiceClient;
     @Mock private TicketTierRepository ticketTierRepository;
+    @Mock private WalletRepository walletRepository;
     @Mock private AuditService auditService;
 
     private OrderService orderService;
@@ -40,7 +44,7 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
         orderService = new OrderService(orderRepository, eventServiceClient,
-                ticketTierRepository, auditService);
+                ticketTierRepository, walletRepository, auditService);
         ReflectionTestUtils.setField(orderService, "mockPaymentCheckout", true);
     }
 
@@ -55,6 +59,8 @@ class OrderServiceTest {
         EventServiceResponse event = buildEvent(eventId, tierId);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(walletRepository.debitWallet(eq(buyerId), any())).thenReturn(1);
+        when(walletRepository.getBalance(buyerId)).thenReturn(new BigDecimal("7000.00"));
         when(ticketTierRepository.decrementRemainingQty(any(), anyInt())).thenReturn(1);
 
         CreateOrderRequest request = new CreateOrderRequest(eventId,
@@ -65,6 +71,8 @@ class OrderServiceTest {
         assertNotNull(response);
         assertEquals("CONFIRMED", response.getStatus());
         assertEquals(new BigDecimal("3000.00"), response.getTotalAmount());
+        assertEquals(new BigDecimal("7000.00"), response.getRemainingBalance());
+        verify(walletRepository).debitWallet(eq(buyerId), eq(new BigDecimal("3000.00")));
         verify(auditService).logOrderCreated(any(), eq(buyerId), eq(1), anyString());
         verify(auditService).logOrderConfirmed(any());
     }
@@ -214,6 +222,86 @@ class OrderServiceTest {
                 () -> orderService.getOrderById(orderId, buyerId));
     }
 
+    // ── cancelOrder ──────────────────────────────────────────────────────────
+
+    @Test
+    void cancelOrder_confirmedOrder_returnsCancelled() {
+        UUID buyerId = UUID.randomUUID();
+        UUID tierId = UUID.randomUUID();
+        Order order = buildOrderWithItem(buyerId, OrderStatus.CONFIRMED, tierId,
+                Instant.now().plus(2, ChronoUnit.DAYS));
+
+        when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
+                .thenReturn(Optional.of(order));
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(ticketTierRepository.incrementRemainingQty(any(), anyInt())).thenReturn(1);
+        when(walletRepository.creditWallet(eq(buyerId), any())).thenReturn(1);
+        when(walletRepository.getBalance(buyerId)).thenReturn(new BigDecimal("10000.00"));
+
+        CancelOrderResponse response = orderService.cancelOrder(order.getId(), buyerId);
+
+        assertEquals("CANCELLED", response.getStatus());
+        assertEquals(new BigDecimal("10000.00"), response.getRemainingBalance());
+        verify(ticketTierRepository).incrementRemainingQty(eq(tierId), eq(1));
+        verify(walletRepository).creditWallet(eq(buyerId), any());
+        verify(auditService).logOrderCancelled(order.getId());
+    }
+
+    @Test
+    void cancelOrder_pendingOrder_throwsCancellationNotAllowed() {
+        UUID buyerId = UUID.randomUUID();
+        Order order = buildOrderWithItem(buyerId, OrderStatus.PENDING, UUID.randomUUID(),
+                Instant.now().plus(2, ChronoUnit.DAYS));
+
+        when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
+                .thenReturn(Optional.of(order));
+
+        assertThrows(OrderCancellationNotAllowedException.class,
+                () -> orderService.cancelOrder(order.getId(), buyerId));
+    }
+
+    @Test
+    void cancelOrder_eventTooSoon_throwsCancellationNotAllowed() {
+        UUID buyerId = UUID.randomUUID();
+        Order order = buildOrderWithItem(buyerId, OrderStatus.CONFIRMED, UUID.randomUUID(),
+                Instant.now().plus(12, ChronoUnit.HOURS));
+
+        when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
+                .thenReturn(Optional.of(order));
+
+        assertThrows(OrderCancellationNotAllowedException.class,
+                () -> orderService.cancelOrder(order.getId(), buyerId));
+    }
+
+    @Test
+    void cancelOrder_notOwner_throwsOrderNotFoundException() {
+        UUID orderId = UUID.randomUUID();
+        UUID buyerId = UUID.randomUUID();
+        when(orderRepository.findByIdAndBuyerId(orderId, buyerId)).thenReturn(Optional.empty());
+        when(orderRepository.existsById(orderId)).thenReturn(false);
+
+        assertThrows(OrderNotFoundException.class,
+                () -> orderService.cancelOrder(orderId, buyerId));
+    }
+
+    @Test
+    void createOrder_insufficientBalance_throwsInsufficientWalletBalanceException() {
+        UUID buyerId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        UUID tierId = UUID.randomUUID();
+
+        EventServiceResponse event = buildEvent(eventId, tierId);
+        when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(walletRepository.debitWallet(eq(buyerId), any())).thenReturn(0);
+
+        CreateOrderRequest request = new CreateOrderRequest(eventId,
+                List.of(new OrderItemRequest(tierId, 2)));
+
+        assertThrows(InsufficientWalletBalanceException.class,
+                () -> orderService.createOrder(request, buyerId));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private EventServiceResponse buildEvent(UUID eventId, UUID tierId) {
@@ -243,6 +331,22 @@ class OrderServiceTest {
         order.setTotalAmount(new BigDecimal("3000.00"));
         order.setCreatedAt(Instant.now());
         order.setUpdatedAt(Instant.now());
+        return order;
+    }
+
+    private Order buildOrderWithItem(UUID buyerId, OrderStatus status, UUID tierId, Instant eventDate) {
+        Order order = buildOrder(buyerId, status);
+        OrderItem item = new OrderItem();
+        item.setId(UUID.randomUUID());
+        item.setOrder(order);
+        item.setTierId(tierId);
+        item.setTierName("General");
+        item.setEventTitle("Test Event");
+        item.setEventDate(eventDate);
+        item.setQuantity(1);
+        item.setUnitPrice(new BigDecimal("3000.00"));
+        item.setCreatedAt(Instant.now());
+        order.getItems().add(item);
         return order;
     }
 }
