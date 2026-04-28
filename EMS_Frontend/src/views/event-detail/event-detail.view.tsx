@@ -50,7 +50,7 @@ export const EventDetailView: React.FC = () => {
     queryKey: ['event', eventId],
     queryFn: () => eventService.getPublicEvent(eventId!),
     enabled: !!eventId,
-    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   const [ticketSelections, setTicketSelections] = useState<Record<string, number>>({});
@@ -59,15 +59,11 @@ export const EventDetailView: React.FC = () => {
 
   useEffect(() => {
     if (event?.tiers) {
-      const initial: Record<string, number> = {};
-      event.tiers.forEach((tier) => {
-        initial[tier.id] = 0;
-      });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTicketSelections(initial);
+      setTicketSelections(
+        Object.fromEntries(event.tiers.map((tier) => [tier.id, 0]))
+      );
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event?.id]);
+  }, [event?.id]); // intentionally keyed on id so selections reset only when event changes
 
   const hasAnySelection = Object.values(ticketSelections).some((qty) => qty > 0);
   const canBuy = !user || user.role === 'BUYER';
@@ -86,9 +82,8 @@ export const EventDetailView: React.FC = () => {
     setBuyError(null);
     setBuying(true);
     try {
-      const items = event.tiers
-        .filter((tier) => (ticketSelections[tier.id] ?? 0) > 0)
-        .map((tier) => ({ tierId: tier.id, quantity: ticketSelections[tier.id] }));
+      const selectedTiers = event.tiers.filter((tier) => (ticketSelections[tier.id] ?? 0) > 0);
+      const items = selectedTiers.map((tier) => ({ tierId: tier.id, quantity: ticketSelections[tier.id] }));
 
       const response = await orderService.createOrder({ eventId: event.id, items });
 
@@ -97,21 +92,17 @@ export const EventDetailView: React.FC = () => {
         updateWalletBalance(response.remainingBalance);
       }
 
-      const confirmationItems = event.tiers
-        .filter((tier) => (ticketSelections[tier.id] ?? 0) > 0)
-        .map((tier) => ({
-          tierName: tier.name,
-          quantity: ticketSelections[tier.id],
-          unitPrice: tier.price,
-        }));
-
       navigate(`/orders/${response.orderId}`, {
         state: {
           orderId: response.orderId,
           status: response.status,
           eventTitle: event.title,
           totalAmount: response.totalAmount,
-          items: confirmationItems,
+          items: selectedTiers.map((tier) => ({
+            tierName: tier.name,
+            quantity: ticketSelections[tier.id],
+            unitPrice: tier.price,
+          })),
         },
       });
     } catch (err: unknown) {

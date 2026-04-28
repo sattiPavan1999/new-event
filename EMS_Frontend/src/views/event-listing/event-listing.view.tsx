@@ -7,6 +7,18 @@ import { BuyerLayout } from '@/components/buyer-layout';
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
 
+const priceFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+const formatPrice = (price: number) => priceFormatter.format(price);
+
+const dateFormatOptions: Intl.DateTimeFormatOptions = {
+  weekday: 'short',
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+};
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString('en-US', dateFormatOptions);
+
 export const EventListingView: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -15,7 +27,7 @@ export const EventListingView: React.FC = () => {
   const [page, setPage] = useState(0);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['events', { search, category, city, page }],
+    queryKey: ['events', search, category, city, page],
     queryFn: () => eventService.getPublicEvents({
       search: search || undefined,
       category: category || undefined,
@@ -30,22 +42,6 @@ export const EventListingView: React.FC = () => {
     setCategory('');
     setCity('');
     setPage(0);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(price);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   return (

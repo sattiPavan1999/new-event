@@ -20,4 +20,9 @@ public interface TicketTierRepository extends JpaRepository<TicketTier, UUID> {
     long countByEventId(@Param("eventId") UUID eventId);
 
     List<TicketTier> findByEventId(UUID eventId);
+
+    List<TicketTier> findByEventIdIn(List<UUID> eventIds);
+
+    @Query("SELECT t.event.id, MIN(t.price) FROM TicketTier t WHERE t.event.id IN :eventIds AND t.status = :status GROUP BY t.event.id")
+    List<Object[]> findMinActivePricesByEventIds(@Param("eventIds") List<UUID> eventIds, @Param("status") TierStatus status);
 }

@@ -20,6 +20,7 @@ import com.eventmanagement.exception.ResourceNotFoundException;
 import com.eventmanagement.repository.EventRepository;
 import com.eventmanagement.repository.TicketTierRepository;
 import com.eventmanagement.repository.VenueRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,6 +42,9 @@ public class EventService {
     private final VenueRepository venueRepository;
     private final TicketTierRepository ticketTierRepository;
     private final AuditService auditService;
+
+    @Value("${event.max-tiers:10}")
+    private int maxTiersPerEvent;
 
     public EventService(EventRepository eventRepository, VenueRepository venueRepository,
                         TicketTierRepository ticketTierRepository, AuditService auditService) {
@@ -84,8 +90,8 @@ public class EventService {
         validateEventOwnership(event, organiserId);
 
         long tierCount = ticketTierRepository.countByEventId(eventId);
-        if (tierCount >= 10) {
-            throw new BusinessRuleViolationException("Maximum 10 tiers allowed per event");
+        if (tierCount >= maxTiersPerEvent) {
+            throw new BusinessRuleViolationException("Maximum " + maxTiersPerEvent + " tiers allowed per event");
         }
 
         if (request.getSaleStartsAt() != null && request.getSaleEndsAt() != null) {
@@ -281,8 +287,17 @@ public class EventService {
                 pageable
         );
 
+        List<UUID> eventIds = eventPage.getContent().stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+
+        Map<UUID, BigDecimal> minPrices = eventIds.isEmpty() ? Collections.emptyMap() :
+                ticketTierRepository.findMinActivePricesByEventIds(eventIds, TierStatus.ACTIVE)
+                        .stream()
+                        .collect(Collectors.toMap(row -> (UUID) row[0], row -> (BigDecimal) row[1]));
+
         List<EventSummaryResponse> content = eventPage.getContent().stream()
-                .map(this::toEventSummaryResponse)
+                .map(e -> toEventSummaryResponse(e, minPrices.getOrDefault(e.getId(), BigDecimal.ZERO)))
                 .collect(Collectors.toList());
 
         auditService.logEventBrowsed(
@@ -303,7 +318,7 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public EventDetailResponse getEventDetail(UUID eventId) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findWithDetailsById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
         if (event.getStatus() != EventStatus.PUBLISHED) {
@@ -317,12 +332,12 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public SalesSummaryResponse getSalesSummary(UUID eventId, UUID organiserId) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findWithDetailsById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
         validateEventOwnership(event, organiserId);
 
-        List<TicketTier> tiers = ticketTierRepository.findByEventId(eventId);
+        List<TicketTier> tiers = event.getTicketTiers();
 
         List<SalesSummaryResponse.TierSalesDto> tierSales = tiers.stream()
                 .map(tier -> {
@@ -359,6 +374,18 @@ public class EventService {
     public PageResponse<EventDetailResponse> getOrganizerEvents(UUID organiserId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Event> eventPage = eventRepository.findByOrganiserIdOrderByCreatedAtDesc(organiserId, pageable);
+
+        List<UUID> eventIds = eventPage.getContent().stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+        if (!eventIds.isEmpty()) {
+            Map<UUID, List<TicketTier>> tiersByEvent = ticketTierRepository.findByEventIdIn(eventIds)
+                    .stream()
+                    .collect(Collectors.groupingBy(t -> t.getEvent().getId()));
+            eventPage.getContent().forEach(e ->
+                    e.setTicketTiers(tiersByEvent.getOrDefault(e.getId(), Collections.emptyList())));
+        }
+
         List<EventDetailResponse> content = eventPage.getContent().stream()
                 .map(this::toEventDetailResponse)
                 .collect(Collectors.toList());
@@ -368,7 +395,7 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public EventDetailResponse getOrganiserEventDetail(UUID eventId, UUID organiserId) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findWithDetailsById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
         validateEventOwnership(event, organiserId);
         return toEventDetailResponse(event);
@@ -413,13 +440,7 @@ public class EventService {
         );
     }
 
-    private EventSummaryResponse toEventSummaryResponse(Event event) {
-        BigDecimal lowestPrice = event.getTicketTiers().stream()
-                .filter(tier -> tier.getStatus() == TierStatus.ACTIVE)
-                .map(TicketTier::getPrice)
-                .min(BigDecimal::compareTo)
-                .orElse(BigDecimal.ZERO);
-
+    private EventSummaryResponse toEventSummaryResponse(Event event, BigDecimal lowestPrice) {
         return new EventSummaryResponse(
                 event.getId(),
                 event.getTitle(),

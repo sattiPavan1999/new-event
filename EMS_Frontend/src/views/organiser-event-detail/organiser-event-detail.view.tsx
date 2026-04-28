@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
@@ -70,7 +70,7 @@ interface TierFormPanelProps {
   onDone: () => void;
 }
 
-const TierFormPanel: React.FC<TierFormPanelProps> = ({ tier, eventId, onDone }) => {
+const TierFormPanel = React.memo<TierFormPanelProps>(function TierFormPanel({ tier, eventId, onDone }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<TierFormData>(tier ? tierFromExisting(tier) : emptyTierForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -210,7 +210,7 @@ const TierFormPanel: React.FC<TierFormPanelProps> = ({ tier, eventId, onDone }) 
       </div>
     </form>
   );
-};
+});
 
 // ─── Main View ───────────────────────────────────────────────────────────────
 
@@ -251,7 +251,11 @@ export const OrganiserEventDetailView: React.FC = () => {
   const { data: venues = [] } = useQuery({
     queryKey: ['venues'],
     queryFn: () => eventService.getVenues(),
+    staleTime: Infinity,
   });
+
+  const handleDoneAddingTier = useCallback(() => setAddingTier(false), []);
+  const handleDoneEditingTier = useCallback(() => setEditingTierId(null), []);
 
   const updateMutation = useMutation({
     mutationFn: () =>
@@ -548,7 +552,7 @@ export const OrganiserEventDetailView: React.FC = () => {
 
           {addingTier && (
             <div className="mb-4">
-              <TierFormPanel eventId={eventId!} onDone={() => setAddingTier(false)} />
+              <TierFormPanel eventId={eventId!} onDone={handleDoneAddingTier} />
             </div>
           )}
 
@@ -562,7 +566,7 @@ export const OrganiserEventDetailView: React.FC = () => {
                     <TierFormPanel
                       tier={tier}
                       eventId={eventId!}
-                      onDone={() => setEditingTierId(null)}
+                      onDone={handleDoneEditingTier}
                     />
                   ) : (
                     <div className="border border-gray-200 rounded-lg p-4 flex items-start justify-between">
