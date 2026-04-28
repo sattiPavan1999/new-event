@@ -61,8 +61,10 @@ export const EventDetailView: React.FC = () => {
       event.tiers.forEach((tier) => {
         initial[tier.id] = 0;
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTicketSelections(initial);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.id]);
 
   const hasAnySelection = Object.values(ticketSelections).some((qty) => qty > 0);

@@ -27,7 +27,7 @@ export const LoginView: React.FC = () => {
       const redirectPath = data.user.role === 'BUYER' ? '/events' : '/organiser/events';
       navigate(redirectPath);
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { status?: number; data?: { error?: string } }; code?: string; message?: string }) => {
       // Clear password for security
       setPassword('');
 

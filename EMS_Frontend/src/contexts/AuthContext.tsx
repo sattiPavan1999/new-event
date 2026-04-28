@@ -18,24 +18,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Load auth state from localStorage on mount
-    const storedUser = localStorage.getItem('user');
-    const storedAccessToken = localStorage.getItem('accessToken');
-    const storedRefreshToken = localStorage.getItem('refreshToken');
-
-    if (storedUser && storedAccessToken && storedRefreshToken) {
-      setUser(JSON.parse(storedUser));
-      setAccessToken(storedAccessToken);
-      setRefreshToken(storedRefreshToken);
-    }
-    setIsLoading(false);
-  }, []);
+  const [user, setUser] = useState<User | null>(() => {
+    const stored = localStorage.getItem('user');
+    return stored ? (JSON.parse(stored) as User) : null;
+  });
+  const [accessToken, setAccessToken] = useState<string | null>(() =>
+    localStorage.getItem('accessToken')
+  );
+  const [refreshToken, setRefreshToken] = useState<string | null>(() =>
+    localStorage.getItem('refreshToken')
+  );
 
   useEffect(() => {
     setupAuthInterceptor(() => accessToken);
@@ -48,7 +40,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessToken(authData.accessToken);
     setRefreshToken(authData.refreshToken);
 
-    // Persist to localStorage
     localStorage.setItem('user', JSON.stringify(authData.user));
     localStorage.setItem('accessToken', authData.accessToken);
     localStorage.setItem('refreshToken', authData.refreshToken);
@@ -59,7 +50,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAccessToken(null);
     setRefreshToken(null);
 
-    // Clear localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -72,12 +62,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticated: !!user && !!accessToken,
     login,
     logout,
-    isLoading,
+    isLoading: false,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

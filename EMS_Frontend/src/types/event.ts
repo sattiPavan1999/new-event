@@ -153,4 +153,4 @@ export interface CreateTierRequest {
   saleEndsAt?: string;
 }
 
-export interface UpdateTierRequest extends CreateTierRequest {}
+export type UpdateTierRequest = CreateTierRequest;

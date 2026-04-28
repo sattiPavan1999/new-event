@@ -30,7 +30,7 @@ export const OrganiserRegistrationView: React.FC = () => {
       // Redirect to organiser dashboard
       navigate('/organiser/dashboard');
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { status?: number; data?: { error?: string; field?: string; fields?: Record<string, string> } }; code?: string; message?: string }) => {
       if (error.response?.status === 409) {
         setErrors({ email: 'This email is already registered. Please sign in instead.' });
       } else if (error.response?.status === 400) {

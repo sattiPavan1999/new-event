@@ -32,7 +32,7 @@ export const BuyerRegistrationView: React.FC = () => {
         navigate('/events');
       }, 1000);
     },
-    onError: (error: any) => {
+    onError: (error: { response?: { status?: number; data?: { error?: string; field?: string; fields?: Record<string, string> } }; code?: string; message?: string }) => {
       if (error.response?.status === 409) {
         setErrors({ email: error.response.data?.error || 'This email is already registered. Please login or use a different email.' });
       } else if (error.response?.status === 400) {
