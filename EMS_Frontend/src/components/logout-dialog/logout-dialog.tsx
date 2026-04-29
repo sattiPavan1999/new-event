@@ -12,15 +12,12 @@ interface LogoutDialogProps {
 
 export const LogoutDialog: React.FC<LogoutDialogProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const { logout: clearAuthState, refreshToken } = useAuth();
+  const { logout: clearAuthState } = useAuth();
 
   const logoutMutation = useMutation({
-    mutationFn: () => authService.logout({ refreshToken: refreshToken || '' }),
+    mutationFn: () => authService.logout(),
     onSuccess: () => {
-      // Clear auth state
       clearAuthState();
-
-      // Redirect to login
       navigate('/login');
     },
     onError: () => {

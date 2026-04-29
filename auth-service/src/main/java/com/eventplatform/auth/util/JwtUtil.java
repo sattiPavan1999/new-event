@@ -16,15 +16,12 @@ public class JwtUtil {
 
     private final SecretKey secretKey;
     private final long accessTokenExpiry;
-    private final long refreshTokenExpiry;
 
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.access-token-expiry}") long accessTokenExpiry,
-            @Value("${jwt.refresh-token-expiry}") long refreshTokenExpiry) {
+            @Value("${jwt.access-token-expiry}") long accessTokenExpiry) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpiry = accessTokenExpiry;
-        this.refreshTokenExpiry = refreshTokenExpiry;
     }
 
     public String generateAccessToken(UUID userId, String email, String role) {
@@ -42,33 +39,11 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String generateRefreshToken(UUID userId) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + refreshTokenExpiry);
-
-        return Jwts.builder()
-                .subject(userId.toString())
-                .claim("type", "refresh")
-                .issuedAt(now)
-                .expiration(expiry)
-                .signWith(secretKey)
-                .compact();
-    }
-
     public Claims validateToken(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    public UUID getUserIdFromToken(String token) {
-        Claims claims = validateToken(token);
-        return UUID.fromString(claims.getSubject());
-    }
-
-    public long getRefreshTokenExpiryMillis() {
-        return refreshTokenExpiry;
     }
 }

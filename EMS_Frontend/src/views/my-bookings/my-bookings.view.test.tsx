@@ -50,7 +50,7 @@ describe('MyBookingsView — cancel button visibility', () => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({
       user: { id: 'u1', email: 'a@b.com', fullName: 'A', role: 'BUYER', isActive: true },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
+      isAuthenticated: true, accessToken: 'tok',
       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
   })
@@ -88,7 +88,7 @@ describe('MyBookingsView — cancel button visibility', () => {
     const updateWalletBalance = vi.fn()
     mockUseAuth.mockReturnValue({
       user: { id: 'u1', email: 'a@b.com', fullName: 'A', role: 'BUYER', isActive: true },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
+      isAuthenticated: true, accessToken: 'tok',
       login: vi.fn(), logout: vi.fn(), updateWalletBalance, isLoading: false,
     })
     mockOrderService.getMyBookings.mockResolvedValue({

@@ -25,8 +25,7 @@ describe('BuyerLayout', () => {
 
   it('renders children', () => {
     mockUseAuth.mockReturnValue({
-      user: null, isAuthenticated: false, accessToken: null, refreshToken: null,
-      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+      user: null, isAuthenticated: false, accessToken: null,       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     renderInRouter(<BuyerLayout><span>child content</span></BuyerLayout>)
     expect(screen.getByText('child content')).toBeInTheDocument()
@@ -35,8 +34,7 @@ describe('BuyerLayout', () => {
   it('shows My Bookings link for BUYER', () => {
     mockUseAuth.mockReturnValue({
       user: { id: '1', email: 'b@x.com', fullName: 'Bob', role: 'BUYER', isActive: true },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
-      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+      isAuthenticated: true, accessToken: 'tok',       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     renderInRouter(<BuyerLayout><span /></BuyerLayout>)
     expect(screen.getByText('My Bookings')).toBeInTheDocument()
@@ -45,8 +43,7 @@ describe('BuyerLayout', () => {
   it('hides My Bookings link for non-BUYER role', () => {
     mockUseAuth.mockReturnValue({
       user: { id: '2', email: 'a@x.com', fullName: 'Alice', role: 'ORGANISER', isActive: true },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
-      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+      isAuthenticated: true, accessToken: 'tok',       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     renderInRouter(<BuyerLayout><span /></BuyerLayout>)
     expect(screen.queryByText('My Bookings')).not.toBeInTheDocument()
@@ -55,8 +52,7 @@ describe('BuyerLayout', () => {
   it('shows user greeting and logout button when authenticated', () => {
     mockUseAuth.mockReturnValue({
       user: { id: '1', email: 'b@x.com', fullName: 'Bob', role: 'BUYER', isActive: true },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
-      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+      isAuthenticated: true, accessToken: 'tok',       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     renderInRouter(<BuyerLayout><span /></BuyerLayout>)
     expect(screen.getByText('Hi, Bob')).toBeInTheDocument()
@@ -65,8 +61,7 @@ describe('BuyerLayout', () => {
 
   it('hides user info when unauthenticated', () => {
     mockUseAuth.mockReturnValue({
-      user: null, isAuthenticated: false, accessToken: null, refreshToken: null,
-      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+      user: null, isAuthenticated: false, accessToken: null,       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     renderInRouter(<BuyerLayout><span /></BuyerLayout>)
     expect(screen.queryByText(/Hi,/)).not.toBeInTheDocument()
@@ -76,8 +71,7 @@ describe('BuyerLayout', () => {
   it('shows wallet balance badge for BUYER with walletBalance', () => {
     mockUseAuth.mockReturnValue({
       user: { id: '1', email: 'b@x.com', fullName: 'Bob', role: 'BUYER', isActive: true, walletBalance: 10000 },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
-      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+      isAuthenticated: true, accessToken: 'tok',       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     renderInRouter(<BuyerLayout><span /></BuyerLayout>)
     expect(screen.getByText('₹10,000')).toBeInTheDocument()
@@ -86,8 +80,7 @@ describe('BuyerLayout', () => {
   it('hides wallet badge for ORGANISER', () => {
     mockUseAuth.mockReturnValue({
       user: { id: '2', email: 'a@x.com', fullName: 'Alice', role: 'ORGANISER', isActive: true, walletBalance: 10000 },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
-      login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
+      isAuthenticated: true, accessToken: 'tok',       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     renderInRouter(<BuyerLayout><span /></BuyerLayout>)
     expect(screen.queryByText('₹10,000')).not.toBeInTheDocument()

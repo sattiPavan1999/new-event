@@ -54,7 +54,7 @@ describe('OrganiserDashboardView', () => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({
       user: { id: '1', email: 'alice@x.com', fullName: 'Alice', role: 'ORGANISER', isActive: true },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
+      isAuthenticated: true, accessToken: 'tok',
       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     mockGetOrganiserEvents.mockResolvedValue(emptyResponse)

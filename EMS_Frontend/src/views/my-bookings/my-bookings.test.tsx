@@ -58,7 +58,7 @@ describe('MyBookingsView', () => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({
       user: { id: 'u1', email: 'b@x.com', fullName: 'Bob', role: 'BUYER', isActive: true },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
+      isAuthenticated: true, accessToken: 'tok',
       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
   })

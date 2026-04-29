@@ -1,17 +1,13 @@
 package com.eventplatform.auth.service;
 
 import com.eventplatform.auth.dto.*;
-import com.eventplatform.auth.entity.RefreshToken;
 import com.eventplatform.auth.entity.User;
 import com.eventplatform.auth.enums.UserRole;
 import com.eventplatform.auth.exception.DuplicateEmailException;
 import com.eventplatform.auth.exception.InvalidCredentialsException;
 import com.eventplatform.auth.exception.InvalidRoleException;
-import com.eventplatform.auth.exception.InvalidTokenException;
-import com.eventplatform.auth.repository.RefreshTokenRepository;
 import com.eventplatform.auth.repository.UserRepository;
 import com.eventplatform.auth.util.JwtUtil;
-import io.jsonwebtoken.Claims;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,23 +19,17 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
     private final AuditService auditService;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final jakarta.persistence.EntityManager entityManager;
 
     public AuthService(UserRepository userRepository,
-                       RefreshTokenRepository refreshTokenRepository,
                        JwtUtil jwtUtil,
-                       AuditService auditService,
-                       jakarta.persistence.EntityManager entityManager) {
+                       AuditService auditService) {
         this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.jwtUtil = jwtUtil;
         this.auditService = auditService;
         this.passwordEncoder = new BCryptPasswordEncoder(12);
-        this.entityManager = entityManager;
     }
 
     @Transactional
@@ -74,13 +64,10 @@ public class AuthService {
         userRepository.save(user);
 
         String accessToken = jwtUtil.generateAccessToken(userId, user.getEmail(), user.getRole().name());
-        String refreshToken = jwtUtil.generateRefreshToken(userId);
-
-        saveRefreshToken(userId, refreshToken);
 
         auditService.logRegistration(request.getEmail(), request.getRole(), true);
 
-        return buildAuthResponse(accessToken, refreshToken, user);
+        return buildAuthResponse(accessToken, user);
     }
 
     @Transactional
@@ -97,86 +84,18 @@ public class AuthService {
         }
 
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId());
-
-        saveRefreshToken(user.getId(), refreshToken);
 
         auditService.logLogin(request.getEmail(), true);
 
-        return buildAuthResponse(accessToken, refreshToken, user);
+        return buildAuthResponse(accessToken, user);
     }
 
-    @Transactional
-    public AuthResponse refresh(RefreshRequest request) {
-        String token = request.getRefreshToken();
-
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
-                .orElseThrow(() -> {
-                    auditService.logTokenRefresh("unknown", false);
-                    return new InvalidTokenException("Invalid or expired refresh token");
-                });
-
-        if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(refreshToken);
-            auditService.logTokenRefresh(refreshToken.getUserId().toString(), false);
-            throw new InvalidTokenException("Invalid or expired refresh token");
-        }
-
-        try {
-            Claims claims = jwtUtil.validateToken(token);
-            UUID userId = UUID.fromString(claims.getSubject());
-
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new InvalidTokenException("User not found"));
-
-            refreshTokenRepository.delete(refreshToken);
-            entityManager.flush();
-
-            String newAccessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-            String newRefreshToken = jwtUtil.generateRefreshToken(user.getId());
-
-            saveRefreshToken(user.getId(), newRefreshToken);
-
-            auditService.logTokenRefresh(userId.toString(), true);
-
-            return buildAuthResponse(newAccessToken, newRefreshToken, user);
-        } catch (Exception e) {
-            auditService.logTokenRefresh("unknown", false);
-            throw new InvalidTokenException("Invalid or expired refresh token");
-        }
-    }
-
-    @Transactional
-    public LogoutResponse logout(LogoutRequest request) {
-        String token = request.getRefreshToken();
-
-        try {
-            refreshTokenRepository.deleteByToken(token);
-            Claims claims = jwtUtil.validateToken(token);
-            UUID userId = UUID.fromString(claims.getSubject());
-            auditService.logLogout(userId.toString(), true);
-        } catch (Exception e) {
-            auditService.logLogout("unknown", true);
-        }
-
+    public LogoutResponse logout() {
+        auditService.logLogout("client", true);
         return new LogoutResponse("Logged out successfully");
     }
 
-    private void saveRefreshToken(UUID userId, String token) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = now.plusSeconds(jwtUtil.getRefreshTokenExpiryMillis() / 1000);
-
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setId(UUID.randomUUID());
-        refreshToken.setUserId(userId);
-        refreshToken.setToken(token);
-        refreshToken.setExpiresAt(expiresAt);
-        refreshToken.setCreatedAt(now);
-
-        refreshTokenRepository.save(refreshToken);
-    }
-
-    private AuthResponse buildAuthResponse(String accessToken, String refreshToken, User user) {
+    private AuthResponse buildAuthResponse(String accessToken, User user) {
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
         userDto.setEmail(user.getEmail());
@@ -186,6 +105,6 @@ public class AuthService {
         userDto.setCreatedAt(user.getCreatedAt());
         userDto.setWalletBalance(user.getWalletBalance());
 
-        return new AuthResponse(accessToken, refreshToken, userDto);
+        return new AuthResponse(accessToken, userDto);
     }
 }

@@ -9,7 +9,6 @@ public class JwtConfig {
 
     private String secret;
     private long accessTokenExpiry;
-    private long refreshTokenExpiry;
 
     public String getSecret() {
         return secret;
@@ -25,13 +24,5 @@ public class JwtConfig {
 
     public void setAccessTokenExpiry(long accessTokenExpiry) {
         this.accessTokenExpiry = accessTokenExpiry;
-    }
-
-    public long getRefreshTokenExpiry() {
-        return refreshTokenExpiry;
-    }
-
-    public void setRefreshTokenExpiry(long refreshTokenExpiry) {
-        this.refreshTokenExpiry = refreshTokenExpiry;
     }
 }

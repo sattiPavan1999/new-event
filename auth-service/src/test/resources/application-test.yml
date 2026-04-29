@@ -17,8 +17,7 @@ spring:
 
 jwt:
   secret: testSecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS256AlgorithmTesting
-  access-token-expiry: 900000
-  refresh-token-expiry: 604800000
+  access-token-expiry: 86400000
 
 logging:
   level:

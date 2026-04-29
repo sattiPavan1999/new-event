@@ -56,7 +56,7 @@ describe('EventDetailView — wallet / insufficient balance', () => {
     vi.clearAllMocks()
     mockUseAuth.mockReturnValue({
       user: { id: 'u1', email: 'b@x.com', fullName: 'Bob', role: 'BUYER', isActive: true, walletBalance: 200 },
-      isAuthenticated: true, accessToken: 'tok', refreshToken: 'ref',
+      isAuthenticated: true, accessToken: 'tok',
       login: vi.fn(), logout: vi.fn(), updateWalletBalance: vi.fn(), isLoading: false,
     })
     mockEventService.getPublicEvent.mockResolvedValue(sampleEvent as never)

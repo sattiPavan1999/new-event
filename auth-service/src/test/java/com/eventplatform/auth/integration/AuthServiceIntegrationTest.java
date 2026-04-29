@@ -6,7 +6,6 @@ import com.eventplatform.auth.enums.UserRole;
 import com.eventplatform.auth.exception.DuplicateEmailException;
 import com.eventplatform.auth.exception.InvalidCredentialsException;
 import com.eventplatform.auth.exception.InvalidRoleException;
-import com.eventplatform.auth.repository.RefreshTokenRepository;
 import com.eventplatform.auth.repository.UserRepository;
 import com.eventplatform.auth.service.AuthService;
 import org.junit.jupiter.api.AfterEach;
@@ -33,20 +32,15 @@ class AuthServiceIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
-
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
     @BeforeEach
     void setUp() {
-        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 
     @AfterEach
     void tearDown() {
-        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -58,7 +52,6 @@ class AuthServiceIntegrationTest {
 
         assertNotNull(response);
         assertNotNull(response.getAccessToken());
-        assertNotNull(response.getRefreshToken());
         assertNotNull(response.getUser());
         assertEquals("test@example.com", response.getUser().getEmail());
         assertEquals("John Doe", response.getUser().getFullName());
@@ -93,7 +86,6 @@ class AuthServiceIntegrationTest {
 
         assertNotNull(response);
         assertNotNull(response.getAccessToken());
-        assertNotNull(response.getRefreshToken());
         assertEquals("login@example.com", response.getUser().getEmail());
     }
 
@@ -101,7 +93,6 @@ class AuthServiceIntegrationTest {
     void testLoginInvalidEmail() {
         createTestUser("login@example.com", "Password123", UserRole.BUYER);
         LoginRequest request = new LoginRequest("invalid@example.com", "Password123");
-
 
         assertThrows(InvalidCredentialsException.class, () -> authService.login(request));
     }
@@ -115,9 +106,8 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    void testLogoutIdempotent() {
-        LogoutRequest request = new LogoutRequest("nonexistent.token");
-        LogoutResponse response = authService.logout(request);
+    void testLogout() {
+        LogoutResponse response = authService.logout();
 
         assertNotNull(response);
         assertEquals("Logged out successfully", response.getMessage());

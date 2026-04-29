@@ -1,10 +1,5 @@
 import axios from "axios";
-import type {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  LogoutRequest,
-} from "@/types/auth";
+import type { AuthResponse, LoginRequest, RegisterRequest } from "@/types/auth";
 
 const authApi = axios.create({
   baseURL: "",
@@ -31,11 +26,8 @@ export const authService = {
     return response.data;
   },
 
-  logout: async (data: LogoutRequest): Promise<{ message: string }> => {
-    const response = await authApi.post<{ message: string }>(
-      "/api/auth/logout",
-      data,
-    );
+  logout: async (): Promise<{ message: string }> => {
+    const response = await authApi.post<{ message: string }>("/api/auth/logout");
     return response.data;
   },
 };

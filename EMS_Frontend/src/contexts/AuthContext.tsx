@@ -8,7 +8,6 @@ import { setupOrderApiInterceptor } from '@/services/order';
 interface AuthContextType {
   user: User | null;
   accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   login: (authData: AuthResponse) => void;
   logout: () => void;
@@ -26,9 +25,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [accessToken, setAccessToken] = useState<string | null>(() =>
     localStorage.getItem('accessToken')
   );
-  const [refreshToken, setRefreshToken] = useState<string | null>(() =>
-    localStorage.getItem('refreshToken')
-  );
 
   useEffect(() => {
     setupAuthInterceptor(() => accessToken);
@@ -39,11 +35,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = (authData: AuthResponse) => {
     setUser(authData.user);
     setAccessToken(authData.accessToken);
-    setRefreshToken(authData.refreshToken);
 
     localStorage.setItem('user', JSON.stringify(authData.user));
     localStorage.setItem('accessToken', authData.accessToken);
-    localStorage.setItem('refreshToken', authData.refreshToken);
   };
 
   const updateWalletBalance = (newBalance: number) => {
@@ -58,17 +52,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     setAccessToken(null);
-    setRefreshToken(null);
 
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
   };
 
   const value = {
     user,
     accessToken,
-    refreshToken,
     isAuthenticated: !!user && !!accessToken,
     login,
     logout,

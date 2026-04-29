@@ -10,7 +10,6 @@ export interface User {
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: User;
 }
 
@@ -24,10 +23,6 @@ export interface RegisterRequest {
   fullName: string;
   password: string;
   role: 'BUYER' | 'ORGANISER';
-}
-
-export interface LogoutRequest {
-  refreshToken: string;
 }
 
 export interface AuthError {

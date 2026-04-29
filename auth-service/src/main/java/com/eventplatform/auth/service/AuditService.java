@@ -25,14 +25,6 @@ public class AuditService {
         }
     }
 
-    public void logTokenRefresh(String userId, boolean success) {
-        if (success) {
-            auditLogger.info("Token refresh successful - UserID: {}", maskId(userId));
-        } else {
-            auditLogger.warn("Token refresh failed - UserID: {}", maskId(userId));
-        }
-    }
-
     public void logLogout(String userId, boolean success) {
         if (success) {
             auditLogger.info("User logout successful - UserID: {}", maskId(userId));

@@ -29,15 +29,9 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
-        AuthResponse response = authService.refresh(request);
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/logout")
-    public ResponseEntity<LogoutResponse> logout(@Valid @RequestBody LogoutRequest request) {
-        LogoutResponse response = authService.logout(request);
+    public ResponseEntity<LogoutResponse> logout() {
+        LogoutResponse response = authService.logout();
         return ResponseEntity.ok(response);
     }
 }

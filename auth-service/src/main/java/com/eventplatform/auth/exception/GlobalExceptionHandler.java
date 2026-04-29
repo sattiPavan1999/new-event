@@ -34,14 +34,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidToken(InvalidTokenException ex) {
-        String traceId = MDC.get("traceId");
-        logger.error("Invalid token error: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse("INVALID_TOKEN", ex.getMessage(), traceId);
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-    }
-
     @ExceptionHandler(InvalidRoleException.class)
     public ResponseEntity<ErrorResponse> handleInvalidRole(InvalidRoleException ex) {
         String traceId = MDC.get("traceId");
