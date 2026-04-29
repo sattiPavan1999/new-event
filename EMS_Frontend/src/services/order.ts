@@ -9,21 +9,32 @@ const orderApi = axios.create({
   },
 });
 
-let getToken: (() => string | null) | null = null;
+let _accessToken: string | null = null;
 
-export const setupOrderApiInterceptor = (tokenGetter: () => string | null) => {
-  getToken = tokenGetter;
-  orderApi.interceptors.request.use(
-    (config) => {
-      const token = getToken?.();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error),
-  );
+export const setOrderApiToken = (token: string | null) => {
+  _accessToken = token;
 };
+
+orderApi.interceptors.request.use(
+  (config) => {
+    if (_accessToken) {
+      config.headers.Authorization = `Bearer ${_accessToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+orderApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      setOrderApiToken(null);
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  },
+);
 
 export const orderService = {
   createOrder: async (data: CreateOrderRequest): Promise<CreateOrderResponse> => {

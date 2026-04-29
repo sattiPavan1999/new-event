@@ -20,30 +20,32 @@ const eventApi = axios.create({
   },
 });
 
-let getToken: (() => string | null) | null = null;
-let getUserId: (() => string | null) | null = null;
+let _accessToken: string | null = null;
 
-export const setupEventApiInterceptor = (
-  tokenGetter: () => string | null,
-  userIdGetter?: () => string | null,
-) => {
-  getToken = tokenGetter;
-  if (userIdGetter) getUserId = userIdGetter;
-  eventApi.interceptors.request.use(
-    (config) => {
-      const token = getToken?.();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      const userId = getUserId?.();
-      if (userId) {
-        config.headers["X-User-Id"] = userId;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error),
-  );
+export const setEventApiToken = (token: string | null) => {
+  _accessToken = token;
 };
+
+eventApi.interceptors.request.use(
+  (config) => {
+    if (_accessToken) {
+      config.headers.Authorization = `Bearer ${_accessToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+eventApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      setEventApiToken(null);
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  },
+);
 
 export const eventService = {
   // Organiser endpoints

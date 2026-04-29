@@ -72,11 +72,13 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> {
-                    auditService.logLogin(request.getEmail(), false);
-                    return new InvalidCredentialsException("Invalid email or password");
-                });
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (user == null) {
+            // Constant-time dummy check to prevent email enumeration via timing
+            passwordEncoder.matches(request.getPassword(), "$2a$12$dummyHashForTimingProtection.Only.NotARealHash.XXXXXXXXX");
+            auditService.logLogin(request.getEmail(), false);
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             auditService.logLogin(request.getEmail(), false);

@@ -45,7 +45,7 @@ docker-compose logs -f <service> # tail logs for a service
 
 | Service | Port | Responsibility |
 |---|---|---|
-| Auth Service | 8080 | Registration, login, JWT issuance/refresh |
+| Auth Service | 8080 | Registration, login, JWT issuance |
 | Event Management Service | 8081 | Event CRUD (`/api/organiser/*`), ticket tiers, public browsing |
 | Order Service | 8082 | Order creation, order history |
 | Frontend (dev) | 5173 | React SPA |
@@ -113,13 +113,17 @@ Each service uses Flyway for schema migrations, `@ControllerAdvice` for centrali
 
 ## Environment Variables
 
-Each backend service requires a `.env` file based on its `.env.example`. Key variables:
+Copy `.env.example` to `.env` at the project root before running `docker-compose`. Docker Compose reads the `.env` file automatically.
 
 ```
-JWT_SECRET=          # 256-bit secret shared across all services
-DB_URL=              # JDBC URL pointing to postgres:5433
+JWT_SECRET=          # Required. 256-bit secret shared across all services — no default
+DATABASE_USERNAME=   # PostgreSQL username (default: postgres in docker-compose)
+DATABASE_PASSWORD=   # PostgreSQL password (default: postgres in docker-compose)
+JWT_ACCESS_EXPIRY=   # Access token lifetime ms (default: 86400000 = 24h)
 CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
+
+Each individual backend service also has a `.env.example` for running services outside Docker. Key variable names match the above.
 
 ## Testing
 

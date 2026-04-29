@@ -6,8 +6,8 @@ services:
     container_name: ems-postgres
     environment:
       POSTGRES_DB: eventplatform
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${DATABASE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
     ports:
       - "5433:5432"
     volumes:
@@ -15,7 +15,7 @@ services:
     networks:
       - ems-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,11 +28,11 @@ services:
     environment:
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
-      JWT_SECRET: mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS256Algorithm
-      JWT_ACCESS_EXPIRY: 900000
-      JWT_REFRESH_EXPIRY: 604800000
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-86400000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
     ports:
       - "8080:8080"
     depends_on:
@@ -55,11 +55,10 @@ services:
     environment:
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
-      JWT_SECRET: mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS256Algorithm
-      JWT_ACCESS_EXPIRY: 900000
-      JWT_REFRESH_EXPIRY: 604800000
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
     ports:
       - "8081:8080"
     depends_on:
@@ -83,14 +82,11 @@ services:
       MOCK_PAYMENT_CHECKOUT: "true"
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
-      JWT_SECRET: mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS256Algorithm
-      JWT_ACCESS_EXPIRY: 900000
-      JWT_REFRESH_EXPIRY: 604800000
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET}
       EVENT_SERVICE_BASE_URL: http://event-service:8080
-      APP_FRONTEND_BASE_URL: http://localhost:5173
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
     ports:
       - "8082:8080"
     depends_on:
@@ -111,14 +107,8 @@ services:
       dockerfile: Dockerfile
     container_name: payment-service
     environment:
-      WEBHOOK_SECRET: ""
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
       SERVER_PORT: 8080
-      DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
-      JWT_SECRET: mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS256Algorithm
-      JWT_ACCESS_EXPIRY: 900000
-      JWT_REFRESH_EXPIRY: 604800000
     ports:
       - "8083:8080"
     depends_on:

@@ -9,6 +9,33 @@ const authApi = axios.create({
   },
 });
 
+let _accessToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+  _accessToken = token;
+};
+
+authApi.interceptors.request.use(
+  (config) => {
+    if (_accessToken) {
+      config.headers.Authorization = `Bearer ${_accessToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+authApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      setAuthToken(null);
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  },
+);
+
 export const authService = {
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     const response = await authApi.post<AuthResponse>(
@@ -30,18 +57,4 @@ export const authService = {
     const response = await authApi.post<{ message: string }>("/api/auth/logout");
     return response.data;
   },
-};
-
-// Axios interceptor to add auth token to requests
-export const setupAuthInterceptor = (getAccessToken: () => string | null) => {
-  authApi.interceptors.request.use(
-    (config) => {
-      const token = getAccessToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error),
-  );
 };

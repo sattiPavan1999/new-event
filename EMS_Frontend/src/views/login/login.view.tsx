@@ -118,18 +118,6 @@ export const LoginView: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <button
-                type="button"
-                onClick={() => navigate('/forgot-password')}
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                Forgot your password?
-              </button>
-            </div>
-          </div>
-
           <div>
             <Button
               type="submit"

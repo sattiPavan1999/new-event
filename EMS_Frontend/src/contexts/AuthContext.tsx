@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, AuthResponse } from '@/types/auth';
-import { setupAuthInterceptor } from '@/services/auth';
-import { setupEventApiInterceptor } from '@/services/event';
-import { setupOrderApiInterceptor } from '@/services/order';
+import { setAuthToken } from '@/services/auth';
+import { setEventApiToken } from '@/services/event';
+import { setOrderApiToken } from '@/services/order';
 
 interface AuthContextType {
   user: User | null;
@@ -26,15 +26,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.getItem('accessToken')
   );
 
+  // Sync persisted token into service modules on first render
   useEffect(() => {
-    setupAuthInterceptor(() => accessToken);
-    setupEventApiInterceptor(() => accessToken, () => user?.id ?? null);
-    setupOrderApiInterceptor(() => accessToken);
-  }, [accessToken, user]);
+    const token = localStorage.getItem('accessToken');
+    setAuthToken(token);
+    setEventApiToken(token);
+    setOrderApiToken(token);
+  }, []);
 
   const login = (authData: AuthResponse) => {
     setUser(authData.user);
     setAccessToken(authData.accessToken);
+    setAuthToken(authData.accessToken);
+    setEventApiToken(authData.accessToken);
+    setOrderApiToken(authData.accessToken);
 
     localStorage.setItem('user', JSON.stringify(authData.user));
     localStorage.setItem('accessToken', authData.accessToken);
@@ -52,6 +57,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     setAccessToken(null);
+    setAuthToken(null);
+    setEventApiToken(null);
+    setOrderApiToken(null);
 
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');
