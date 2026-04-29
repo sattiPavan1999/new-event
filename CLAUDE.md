@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Event Management System (EMS) — a full-stack event ticketing platform. React + TypeScript frontend backed by four Java Spring Boot microservices, all sharing one PostgreSQL instance via separate schemas.
+Event Management System (EMS) — a full-stack event ticketing platform. React + TypeScript frontend backed by three Java Spring Boot microservices (auth, event, order), all sharing one PostgreSQL instance via separate schemas.
 
 ## Commands
 
@@ -105,7 +105,7 @@ src/
 └── constants/        # App-wide constants
 ```
 
-### Backend Layer Pattern (all four services)
+### Backend Layer Pattern (all three services)
 
 ```
 Controller → Service → Repository (JPA) → PostgreSQL
