@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -45,6 +46,7 @@ class EventServiceTest {
     @BeforeEach
     void setUp() {
         eventService = new EventService(eventRepository, venueRepository, ticketTierRepository, auditService);
+        ReflectionTestUtils.setField(eventService, "maxTiersPerEvent", 10);
     }
 
     // ── createEvent ───────────────────────────────────────────────────────────
@@ -182,7 +184,7 @@ class EventServiceTest {
     void getEventDetail_publishedEvent_returnsDetail() {
         Event event = buildEvent(UUID.randomUUID());
         event.setStatus(EventStatus.PUBLISHED);
-        when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+        when(eventRepository.findWithDetailsById(event.getId())).thenReturn(Optional.of(event));
 
         EventDetailResponse response = eventService.getEventDetail(event.getId());
 
@@ -194,7 +196,7 @@ class EventServiceTest {
     void getEventDetail_draftEvent_throwsResourceNotFoundException() {
         Event event = buildEvent(UUID.randomUUID());
         // status is DRAFT by default in buildEvent
-        when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
+        when(eventRepository.findWithDetailsById(event.getId())).thenReturn(Optional.of(event));
 
         assertThrows(ResourceNotFoundException.class,
                 () -> eventService.getEventDetail(event.getId()));
@@ -203,7 +205,7 @@ class EventServiceTest {
     @Test
     void getEventDetail_notFound_throwsResourceNotFoundException() {
         UUID eventId = UUID.randomUUID();
-        when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
+        when(eventRepository.findWithDetailsById(eventId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> eventService.getEventDetail(eventId));
@@ -243,8 +245,8 @@ class EventServiceTest {
         UUID organiserId = UUID.randomUUID();
         Event event = buildEvent(organiserId);
         TicketTier tier = buildTier(event, 100, 80); // 20 sold
-        when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
-        when(ticketTierRepository.findByEventId(event.getId())).thenReturn(List.of(tier));
+        event.setTicketTiers(List.of(tier));
+        when(eventRepository.findWithDetailsById(event.getId())).thenReturn(Optional.of(event));
 
         SalesSummaryResponse response = eventService.getSalesSummary(event.getId(), organiserId);
 

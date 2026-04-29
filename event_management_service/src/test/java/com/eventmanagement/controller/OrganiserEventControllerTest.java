@@ -6,7 +6,9 @@ import com.eventmanagement.enums.EventStatus;
 import com.eventmanagement.exception.BusinessRuleViolationException;
 import com.eventmanagement.exception.ResourceNotFoundException;
 import com.eventmanagement.service.EventService;
+import com.eventmanagement.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -30,9 +32,15 @@ class OrganiserEventControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockitoBean private EventService eventService;
+    @MockitoBean private JwtUtil jwtUtil;
 
     private final UUID organiserId = UUID.randomUUID();
     private final UUID eventId = UUID.randomUUID();
+
+    @BeforeEach
+    void stubJwt() {
+        when(jwtUtil.extractOrganiserId(any())).thenReturn(organiserId);
+    }
 
     private EventResponse sampleEventResponse() {
         EventResponse r = new EventResponse();
@@ -60,7 +68,7 @@ class OrganiserEventControllerTest {
         request.setVenueId(UUID.randomUUID());
 
         mockMvc.perform(post("/api/organiser/events")
-                        .header("X-User-Id", organiserId.toString())
+                        .header("Authorization", "Bearer fake-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -75,7 +83,7 @@ class OrganiserEventControllerTest {
         when(eventService.getOrganizerEvents(any(), anyInt(), anyInt())).thenReturn(page);
 
         mockMvc.perform(get("/api/organiser/events")
-                        .header("X-User-Id", organiserId.toString()))
+                        .header("Authorization", "Bearer fake-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
     }
@@ -90,7 +98,7 @@ class OrganiserEventControllerTest {
         when(eventService.getOrganiserEventDetail(any(), any())).thenReturn(detail);
 
         mockMvc.perform(get("/api/organiser/events/{id}", eventId)
-                        .header("X-User-Id", organiserId.toString()))
+                        .header("Authorization", "Bearer fake-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Test Event"));
     }
@@ -102,7 +110,7 @@ class OrganiserEventControllerTest {
         when(eventService.publishEvent(any(), any())).thenReturn(published);
 
         mockMvc.perform(patch("/api/organiser/events/{id}/publish", eventId)
-                        .header("X-User-Id", organiserId.toString()))
+                        .header("Authorization", "Bearer fake-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PUBLISHED"));
     }
@@ -113,7 +121,7 @@ class OrganiserEventControllerTest {
                 .thenThrow(new BusinessRuleViolationException("No active tiers"));
 
         mockMvc.perform(patch("/api/organiser/events/{id}/publish", eventId)
-                        .header("X-User-Id", organiserId.toString()))
+                        .header("Authorization", "Bearer fake-token"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -124,7 +132,7 @@ class OrganiserEventControllerTest {
         when(eventService.cancelEvent(any(), any())).thenReturn(cancelled);
 
         mockMvc.perform(patch("/api/organiser/events/{id}/cancel", eventId)
-                        .header("X-User-Id", organiserId.toString()))
+                        .header("Authorization", "Bearer fake-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
@@ -147,7 +155,7 @@ class OrganiserEventControllerTest {
         request.setTotalQty(100);
 
         mockMvc.perform(post("/api/organiser/events/{id}/tiers", eventId)
-                        .header("X-User-Id", organiserId.toString())
+                        .header("Authorization", "Bearer fake-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -160,7 +168,7 @@ class OrganiserEventControllerTest {
                 .thenThrow(new ResourceNotFoundException("Event not found"));
 
         mockMvc.perform(get("/api/organiser/events/{id}", UUID.randomUUID())
-                        .header("X-User-Id", organiserId.toString()))
+                        .header("Authorization", "Bearer fake-token"))
                 .andExpect(status().isNotFound());
     }
 }

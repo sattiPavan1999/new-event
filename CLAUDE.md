@@ -51,7 +51,6 @@ docker-compose logs -f <service> # tail logs for a service
 | Frontend (dev) | 5173 | React SPA |
 | PostgreSQL | 5433 | Shared DB, separate schemas per service |
 
-> Payment service has been removed. Orders are confirmed immediately via `MOCK_PAYMENT_CHECKOUT=true` in the order service.
 
 ### Frontend Proxy (vite.config.ts)
 
@@ -132,3 +131,12 @@ Each individual backend service also has a `.env.example` for running services o
 - **Frontend**: Vitest + jsdom. Test setup in `src/test/setup.ts`. Path alias `@/` resolves to `src/`.
 - **Backend**: JUnit 5. Integration tests in each service's `src/test/` directory.
 - **E2E**: Playwright config present in `EMS_Frontend/.playwright-mcp/`.
+
+## Git Workflow
+
+After creating or modifying any files or folders in a turn, always:
+1. Summarize every file that was created or changed.
+2. Ask the user to review and confirm before any git operations.
+3. Only if the user explicitly approves, proceed with: `git add` (specific files) → `git commit` → `git push`.
+
+Never stage, commit, or push autonomously without explicit user approval in the same conversation turn.

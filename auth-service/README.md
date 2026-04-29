@@ -6,9 +6,8 @@ Production-ready authentication service for the Event Ticketing Platform. Provid
 
 - **User Registration**: Self-service registration for BUYER and ORGANISER roles
 - **User Login**: Email and password authentication with BCrypt hashing (strength 12)
-- **Token Management**: JWT access tokens (15 min) and refresh tokens (7 days)
-- **Token Refresh**: Automatic token rotation for enhanced security
-- **Logout**: Secure refresh token revocation
+- **Token Management**: JWT access tokens (24 hours)
+- **Logout**: Invalidates the current session
 - **Audit Logging**: Comprehensive audit trail with masked sensitive data
 - **Health Checks**: Multiple health endpoints for container orchestration
 
@@ -44,15 +43,7 @@ Controller → Service → Repository → Database
 | full_name | VARCHAR(255) | NOT NULL |
 | role | VARCHAR(20) | NOT NULL, DEFAULT 'BUYER' |
 | is_active | BOOLEAN | NOT NULL, DEFAULT TRUE |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() |
-
-### auth.refresh_tokens
-| Column | Type | Constraints |
-|--------|------|-------------|
-| id | UUID | PRIMARY KEY |
-| user_id | UUID | NOT NULL, FK to users(id) |
-| token | TEXT | NOT NULL, UNIQUE |
-| expires_at | TIMESTAMP | NOT NULL |
+| wallet_balance | NUMERIC(10,2) | NOT NULL, DEFAULT 10000.00 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() |
 
 ## API Endpoints
@@ -76,7 +67,6 @@ Register a new user (BUYER or ORGANISER only).
 ```json
 {
   "accessToken": "eyJhbGc...",
-  "refreshToken": "eyJhbGc...",
   "user": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "email": "user@example.com",
@@ -103,39 +93,12 @@ Authenticate existing user.
 ```json
 {
   "accessToken": "eyJhbGc...",
-  "refreshToken": "eyJhbGc...",
-  "user": { ... }
-}
-```
-
-#### POST /api/auth/refresh
-Refresh access token using refresh token (implements token rotation).
-
-**Request:**
-```json
-{
-  "refreshToken": "eyJhbGc..."
-}
-```
-
-**Response (200):**
-```json
-{
-  "accessToken": "eyJhbGc...",
-  "refreshToken": "eyJhbGc...",
   "user": { ... }
 }
 ```
 
 #### POST /api/auth/logout
-Revoke refresh token (idempotent operation).
-
-**Request:**
-```json
-{
-  "refreshToken": "eyJhbGc..."
-}
-```
+Logout (no request body required).
 
 **Response (200):**
 ```json
@@ -161,9 +124,8 @@ Environment variables (defined in `application.yml`):
 | DATABASE_URL | jdbc:postgresql://localhost:5432/eventplatform | PostgreSQL connection URL |
 | DATABASE_USERNAME | postgres | Database username |
 | DATABASE_PASSWORD | postgres | Database password |
-| JWT_SECRET | (auto-generated) | JWT signing secret (min 256 bits) |
-| JWT_ACCESS_EXPIRY | 900000 | Access token expiry (15 min in ms) |
-| JWT_REFRESH_EXPIRY | 604800000 | Refresh token expiry (7 days in ms) |
+| JWT_SECRET | (required) | JWT signing secret (min 256 bits) |
+| JWT_ACCESS_EXPIRY | 86400000 | Access token expiry (24 hours in ms) |
 
 ## Running Locally
 
@@ -231,8 +193,7 @@ Coverage report will be available at: `target/site/jacoco/index.html`
 ## Security Features
 
 - **BCrypt Password Hashing**: Strength 12
-- **JWT Tokens**: HS256 algorithm with configurable expiry
-- **Token Rotation**: Old refresh tokens deleted on refresh
+- **JWT Tokens**: HS256 algorithm, 24-hour expiry
 - **Generic Error Messages**: Same message for non-existent email or wrong password (prevents enumeration)
 - **ADMIN Role Protection**: ADMIN role cannot be self-assigned
 - **Password Requirements**: Minimum 8 characters with at least one digit
@@ -251,13 +212,8 @@ Coverage report will be available at: `target/site/jacoco/index.html`
 - Email and password required
 - Email must exist and password must match
 
-### Refresh:
-- Refresh token must exist in database
-- Refresh token must not be expired
-- Old token deleted before new one issued (rotation)
-
 ### Logout:
-- Idempotent: returns 200 even if token not found
+- No request body required; returns 200
 
 ## Error Responses
 
@@ -275,7 +231,6 @@ All errors follow standard format:
 ### Error Codes:
 - `DUPLICATE_EMAIL` (409) - Email already registered
 - `INVALID_CREDENTIALS` (401) - Wrong email or password
-- `INVALID_TOKEN` (401) - Expired or unknown refresh token
 - `INVALID_ROLE` (400) - Invalid role or ADMIN self-assignment attempt
 - `VALIDATION_ERROR` (400) - Request validation failed
 - `INTERNAL_ERROR` (500) - Unexpected server error

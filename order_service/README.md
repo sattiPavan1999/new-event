@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Order Service manages the complete ticket purchase lifecycle for buyers on the event ticketing platform. It validates tier availability and quantity limits, creates orders with snapshotted event data, integrates with Stripe for payment processing, atomically decrements inventory upon successful payment, and provides buyers access to their order history.
+The Order Service manages the complete ticket purchase lifecycle for buyers on the event ticketing platform. It validates tier availability and quantity limits, creates orders with snapshotted event data, debits the buyer's wallet, atomically decrements inventory, and provides buyers access to their order history with cancellation support.
 
 ## Technology Stack
 
@@ -11,7 +11,7 @@ The Order Service manages the complete ticket purchase lifecycle for buyers on t
 - **Build Tool**: Maven 3.9.6
 - **Database**: PostgreSQL 15
 - **Migration**: Flyway
-- **Payment**: Stripe Java SDK
+- **Payment**: Mock (wallet-based, no external payment provider)
 - **Testing**: JUnit 5
 
 ## Architecture
@@ -29,39 +29,39 @@ Controller → Service → Repository → Database
 
 ## Features
 
-### Phase 1: Create Order and Initiate Payment
+### Create Order
 - **Endpoint**: `POST /api/orders`
 - **Authentication**: JWT with BUYER role
 - **Flow**:
   1. Validate tier availability and status (ACTIVE)
   2. Validate event status (PUBLISHED)
   3. Check quantity limits (maxPerOrder) and inventory
-  4. Create order and order items with snapshotted data
-  5. Generate Stripe Checkout session
-  6. Return order ID and Stripe checkout URL
+  4. Debit buyer's wallet
+  5. Atomically decrement inventory
+  6. Create order and order items with snapshotted data (status: CONFIRMED)
 
-### Phase 2: Retrieve Order History
+### Retrieve Order History
 - **Endpoint**: `GET /api/orders/my`
 - **Authentication**: JWT with BUYER role
 - **Flow**:
-  1. Query confirmed orders for authenticated buyer
+  1. Query orders for authenticated buyer
   2. Return paginated list sorted by event date
 
-### Phase 3: Retrieve Single Order
+### Retrieve Single Order
 - **Endpoint**: `GET /api/orders/{id}`
 - **Authentication**: JWT with BUYER role
 - **Flow**:
   1. Validate order ownership
   2. Return order details with all items
 
-### Phase 4: Process Payment Webhook
-- **Endpoint**: `POST /api/payments/webhook`
-- **Authentication**: Stripe signature verification
+### Cancel Order
+- **Endpoint**: `POST /api/orders/{id}/cancel`
+- **Authentication**: JWT with BUYER role
 - **Flow**:
-  1. Verify webhook signature
-  2. Parse Stripe event (checkout.session.completed)
-  3. Atomically decrement inventory (prevents overselling)
-  4. Update order status (CONFIRMED or FAILED)
+  1. Validate order ownership
+  2. Block cancellation if within 24 hours of the event
+  3. Credit wallet back and restore inventory
+  4. Update order status to CANCELLED
 
 ## Database Schema
 
@@ -70,7 +70,7 @@ Controller → Service → Repository → Database
 - `buyer_id` (UUID, FK to auth.users)
 - `status` (VARCHAR - PENDING, CONFIRMED, FAILED)
 - `total_amount` (NUMERIC)
-- `stripe_session_id` (TEXT)
+- `status` supports: PENDING, CONFIRMED, FAILED, CANCELLED
 - `created_at`, `updated_at` (TIMESTAMP)
 
 ### orders.order_items
@@ -87,7 +87,6 @@ Controller → Service → Repository → Database
 
 - Java 21
 - Docker and Docker Compose
-- Stripe account (test mode)
 
 ### Environment Variables
 
@@ -98,8 +97,6 @@ cp .env.example .env
 ```
 
 Fill in the required values:
-- `STRIPE_SECRET_KEY`: Your Stripe secret key (sk_test_...)
-- `STRIPE_WEBHOOK_SECRET`: Your Stripe webhook secret (whsec_...)
 - `JWT_SECRET`: A secure 256-bit secret key (minimum 32 characters)
 
 ### Local Development
@@ -136,24 +133,14 @@ Fill in the required values:
    docker-compose logs -f order-service
    ```
 
-### Stripe Webhook Testing
-
-For local webhook testing, use the Stripe CLI:
-
-```bash
-stripe listen --forward-to localhost:8080/api/payments/webhook
-```
-
-This will provide a webhook secret (whsec_...) to use in your `.env` file.
-
 ## API Endpoints
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/api/orders` | POST | BUYER | Create order and initiate payment |
+| `/api/orders` | POST | BUYER | Create order (debits wallet) |
 | `/api/orders/my` | GET | BUYER | Retrieve order history (paginated) |
 | `/api/orders/{id}` | GET | BUYER | Retrieve single order detail |
-| `/api/payments/webhook` | POST | Stripe Sig | Process payment webhook |
+| `/api/orders/{id}/cancel` | POST | BUYER | Cancel order (refunds wallet) |
 | `/health` | GET | None | Health check |
 | `/health/live` | GET | None | Liveness probe |
 | `/health/ready` | GET | None | Readiness probe |
@@ -174,11 +161,11 @@ Located in `src/main/resources/application.properties`:
 
 ## Business Rules
 
-1. **Atomic Inventory Decrement**: Inventory is only decremented after successful payment via atomic SQL update
+1. **Atomic Inventory Decrement**: Inventory is decremented atomically on order creation to prevent overselling
 2. **Data Snapshotting**: Tier and event details are captured at purchase time (immutable historical records)
-3. **Order Status Lifecycle**: PENDING → CONFIRMED (payment success) or FAILED (payment/inventory failure)
+3. **Order Status Lifecycle**: PENDING → CONFIRMED (wallet debited, inventory decremented) or FAILED / CANCELLED
 4. **Quantity Limits**: Enforced via tier's `maxPerOrder` field
-5. **Idempotency**: Webhook processing prevents duplicate events using `stripe_event_id`
+5. **Cancellation Window**: Cancellation is blocked within 24 hours of the event start time
 6. **Authorization**: Buyers can only access their own orders
 
 ## Error Handling
@@ -252,8 +239,7 @@ Located in `swagger/order-service-openapi.yaml`:
 ## Security
 
 - **JWT Authentication**: All order endpoints require valid BUYER role token
-- **Stripe Webhook Verification**: Signature validation on all webhook requests
-- **CORS**: Configured for User App origin only
+- **CORS**: Configured for frontend origin only
 - **MDC Tracing**: Automatic traceId propagation (no manual logging)
 - **Data Masking**: Sensitive information masked in audit logs
 
@@ -297,15 +283,11 @@ All cross-schema references are validated at the application layer (no database-
 
 ## Out of Scope (v1)
 
-- Refund processing
-- Order cancellation
-- Order modification
 - Email notifications
 - PDF ticket generation
 - QR code generation
 - Bulk orders
 - Promo codes/discounts
-- Partial payments
 - Order expiry
 - Admin order management
 

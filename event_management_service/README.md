@@ -14,7 +14,7 @@ Event Management Service enables event organizers to create, configure, and mana
 
 ## Features
 
-### Admin Features (Organizers)
+### Organiser Features
 - Create events in DRAFT mode
 - Configure multiple ticket tiers per event (max 10 tiers)
 - Edit event details with status-based restrictions
@@ -50,15 +50,15 @@ The application follows a layered architecture:
 
 ## API Endpoints
 
-### Admin Endpoints (Authentication Required)
-- `POST /api/admin/events` - Create event
-- `PUT /api/admin/events/{id}` - Update event
-- `PATCH /api/admin/events/{id}/publish` - Publish event
-- `PATCH /api/admin/events/{id}/cancel` - Cancel event
-- `POST /api/admin/events/{id}/tiers` - Add ticket tier
-- `PUT /api/admin/events/{id}/tiers/{tierId}` - Update tier
-- `DELETE /api/admin/events/{id}/tiers/{tierId}` - Delete tier
-- `GET /api/admin/events/{id}/summary` - View sales summary
+### Organiser Endpoints (ORGANISER role required)
+- `POST /api/organiser/events` - Create event
+- `PUT /api/organiser/events/{id}` - Update event
+- `PATCH /api/organiser/events/{id}/publish` - Publish event
+- `PATCH /api/organiser/events/{id}/cancel` - Cancel event
+- `POST /api/organiser/events/{id}/tiers` - Add ticket tier
+- `PUT /api/organiser/events/{id}/tiers/{tierId}` - Update tier
+- `DELETE /api/organiser/events/{id}/tiers/{tierId}` - Delete tier
+- `GET /api/organiser/events/{id}/summary` - View sales summary
 
 ### Public Endpoints (No Authentication)
 - `GET /api/events` - Browse events (with filters)
