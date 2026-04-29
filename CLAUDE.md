@@ -63,15 +63,15 @@ In production, a reverse proxy must replicate this routing.
 
 ### Authentication Flow
 
-1. Auth service issues short-lived JWT access tokens (15 min) and 7-day refresh tokens.
+1. Auth service issues 24-hour JWT access tokens (no refresh tokens).
 2. All protected backend endpoints validate JWT using a shared `JWT_SECRET`.
-3. Frontend stores tokens in `AuthContext` (see `src/contexts/`) and injects the bearer header via service layer functions in `src/services/`.
+3. Frontend stores the access token in `AuthContext` (see `src/contexts/`) and injects the bearer header via service layer functions in `src/services/`.
 4. Two roles: `BUYER` and `ORGANISER`. Route guards in `App.tsx` enforce role-based access.
 
 ### Database Layout
 
 Single PostgreSQL database (`eventplatform`) with three schemas:
-- `auth` — users (includes `wallet_balance`), refresh_tokens
+- `auth` — users (includes `wallet_balance`)
 - `events` — venues, events (DRAFT/PUBLISHED/CANCELLED), ticket_tiers
 - `orders` — orders (PENDING/CONFIRMED/FAILED/CANCELLED), order_items
 
