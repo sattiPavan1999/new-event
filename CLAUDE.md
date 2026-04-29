@@ -51,11 +51,13 @@ docker-compose logs -f <service> # tail logs for a service
 | Frontend (dev) | 5173 | React SPA |
 | PostgreSQL | 5433 | Shared DB, separate schemas per service |
 
+> Payment service has been removed. Orders are confirmed immediately via `MOCK_PAYMENT_CHECKOUT=true` in the order service.
+
 ### Frontend Proxy (vite.config.ts)
 
 All API calls go through Vite's dev proxy:
 - `/api/auth/*` → `localhost:8080`
-- `/api/orders/*` and `/api/payments/*` → `localhost:8082`
+- `/api/orders/*` → `localhost:8082`
 - `/api/organiser/*` → `localhost:8081` (organiser event management)
 - `/api/*` → `localhost:8081` (catch-all for event service)
 
