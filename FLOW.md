@@ -65,8 +65,7 @@ User fills Registration form (/register/buyer  or  /register/organiser)
 Frontend validation (inline, before API call)
         ├── Email: required + valid format
         ├── Full Name: required
-        └── Password: must match  ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$
-                     (≥8 chars, uppercase, lowercase, digit)
+        └── Password: required
         │
         ▼  POST /api/auth/register  { email, fullName, password, role }
         │
