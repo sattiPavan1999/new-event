@@ -163,21 +163,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(error);
     }
 
-    @ExceptionHandler(PaymentServiceException.class)
-    public ResponseEntity<ErrorResponse> handlePaymentServiceException(PaymentServiceException ex) {
-        String traceId = MDC.get("traceId");
-        logger.error("Payment service error", ex);
-        auditService.logError("PAYMENT_ERROR", ex.getMessage());
-
-        ErrorResponse error = new ErrorResponse(
-                "PAYMENT_ERROR",
-                "Payment service error occurred",
-                Instant.now(),
-                traceId
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         String traceId = MDC.get("traceId");

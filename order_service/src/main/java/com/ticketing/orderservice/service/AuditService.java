@@ -16,16 +16,6 @@ public class AuditService {
                 maskUuid(orderId), maskUuid(buyerId), itemCount, maskAmount(totalAmount));
     }
 
-    public void logPaymentLinkCreated(UUID orderId, String paymentLinkId) {
-        auditLogger.info("PAYMENT_LINK_CREATED - orderId={}, paymentLinkId={}",
-                maskUuid(orderId), maskSensitiveData(paymentLinkId));
-    }
-
-    public void logWebhookReceived(String eventId, String eventType, UUID orderId) {
-        auditLogger.info("WEBHOOK_RECEIVED - eventId={}, eventType={}, orderId={}",
-                eventId, eventType, maskUuid(orderId));
-    }
-
     public void logOrderConfirmed(UUID orderId) {
         auditLogger.info("ORDER_CONFIRMED - orderId={}", maskUuid(orderId));
     }
@@ -46,10 +36,6 @@ public class AuditService {
         auditLogger.error("ERROR - errorCode={}, message={}", errorCode, message);
     }
 
-    public void logInvalidWebhookSignature(String sourceInfo) {
-        auditLogger.warn("INVALID_WEBHOOK_SIGNATURE - source={}", sourceInfo);
-    }
-
     private String maskUuid(UUID uuid) {
         if (uuid == null) {
             return "null";
@@ -60,12 +46,5 @@ public class AuditService {
 
     private String maskAmount(String amount) {
         return "***";
-    }
-
-    private String maskSensitiveData(String data) {
-        if (data == null || data.length() < 10) {
-            return "****";
-        }
-        return data.substring(0, 10) + "****";
     }
 }
