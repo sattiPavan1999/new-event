@@ -5,18 +5,18 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "orders", schema = "orders")
 public class Order {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private UUID id;
+    private Long id;
 
     @Column(name = "buyer_id", nullable = false)
-    private UUID buyerId;
+    private Long buyerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
@@ -40,29 +40,19 @@ public class Order {
     public Order() {
     }
 
-    public Order(UUID id, UUID buyerId, OrderStatus status, BigDecimal totalAmount, String paymentLinkId, Instant createdAt, Instant updatedAt) {
-        this.id = id;
-        this.buyerId = buyerId;
-        this.status = status;
-        this.totalAmount = totalAmount;
-        this.paymentLinkId = paymentLinkId;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public UUID getBuyerId() {
+    public Long getBuyerId() {
         return buyerId;
     }
 
-    public void setBuyerId(UUID buyerId) {
+    public void setBuyerId(Long buyerId) {
         this.buyerId = buyerId;
     }
 
@@ -118,5 +108,4 @@ public class Order {
         items.add(item);
         item.setOrder(this);
     }
-
 }

@@ -4,12 +4,11 @@ import com.eventmanagement.enums.TierStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class TierResponse {
 
-    private UUID id;
-    private UUID eventId;
+    private Long id;
+    private Long eventId;
     private String name;
     private String description;
     private BigDecimal price;
@@ -24,7 +23,7 @@ public class TierResponse {
     public TierResponse() {
     }
 
-    public TierResponse(UUID id, UUID eventId, String name, String description, BigDecimal price,
+    public TierResponse(Long id, Long eventId, String name, String description, BigDecimal price,
                         Integer totalQty, Integer remainingQty, Integer maxPerOrder,
                         LocalDateTime saleStartsAt, LocalDateTime saleEndsAt, TierStatus status,
                         LocalDateTime createdAt) {
@@ -42,19 +41,19 @@ public class TierResponse {
         this.createdAt = createdAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public UUID getEventId() {
+    public Long getEventId() {
         return eventId;
     }
 
-    public void setEventId(UUID eventId) {
+    public void setEventId(Long eventId) {
         this.eventId = eventId;
     }
 

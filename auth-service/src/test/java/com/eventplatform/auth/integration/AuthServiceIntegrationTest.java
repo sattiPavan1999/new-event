@@ -18,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -150,7 +149,6 @@ class AuthServiceIntegrationTest {
 
     private User createTestUser(String email, String password, UserRole role) {
         User user = new User();
-        user.setId(UUID.randomUUID());
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setFullName("Test User");

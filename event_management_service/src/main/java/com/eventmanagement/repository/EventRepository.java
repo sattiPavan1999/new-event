@@ -12,14 +12,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface EventRepository extends JpaRepository<Event, UUID> {
+public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query(value = "SELECT e FROM Event e LEFT JOIN FETCH e.venue WHERE e.organiserId = :organiserId ORDER BY e.createdAt DESC",
            countQuery = "SELECT COUNT(e) FROM Event e WHERE e.organiserId = :organiserId")
-    Page<Event> findByOrganiserIdOrderByCreatedAtDesc(@Param("organiserId") UUID organiserId, Pageable pageable);
+    Page<Event> findByOrganiserIdOrderByCreatedAtDesc(@Param("organiserId") Long organiserId, Pageable pageable);
 
     @Query(value = "SELECT e FROM Event e LEFT JOIN FETCH e.venue v WHERE e.status = :status AND e.eventDate > :now " +
             "AND (:category IS NULL OR e.category = :category) " +
@@ -42,5 +41,5 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     );
 
     @Query("SELECT e FROM Event e LEFT JOIN FETCH e.venue LEFT JOIN FETCH e.ticketTiers WHERE e.id = :eventId")
-    Optional<Event> findWithDetailsById(@Param("eventId") UUID eventId);
+    Optional<Event> findWithDetailsById(@Param("eventId") Long eventId);
 }

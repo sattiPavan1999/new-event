@@ -3,11 +3,10 @@ package com.eventmanagement.dto;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class SalesSummaryResponse {
 
-    private UUID eventId;
+    private Long eventId;
     private String eventTitle;
     private Integer totalOrders;
     private BigDecimal totalRevenue;
@@ -16,7 +15,7 @@ public class SalesSummaryResponse {
     public SalesSummaryResponse() {
     }
 
-    public SalesSummaryResponse(UUID eventId, String eventTitle, Integer totalOrders,
+    public SalesSummaryResponse(Long eventId, String eventTitle, Integer totalOrders,
                                 BigDecimal totalRevenue, List<TierSalesDto> tiers) {
         this.eventId = eventId;
         this.eventTitle = eventTitle;
@@ -25,11 +24,11 @@ public class SalesSummaryResponse {
         this.tiers = tiers;
     }
 
-    public UUID getEventId() {
+    public Long getEventId() {
         return eventId;
     }
 
-    public void setEventId(UUID eventId) {
+    public void setEventId(Long eventId) {
         this.eventId = eventId;
     }
 
@@ -66,7 +65,7 @@ public class SalesSummaryResponse {
     }
 
     public static class TierSalesDto {
-        private UUID tierId;
+        private Long tierId;
         private String tierName;
         private Integer totalQty;
         private Integer remainingQty;
@@ -76,7 +75,7 @@ public class SalesSummaryResponse {
         public TierSalesDto() {
         }
 
-        public TierSalesDto(UUID tierId, String tierName, Integer totalQty, Integer remainingQty,
+        public TierSalesDto(Long tierId, String tierName, Integer totalQty, Integer remainingQty,
                             Integer soldQty, BigDecimal revenue) {
             this.tierId = tierId;
             this.tierName = tierName;
@@ -86,11 +85,11 @@ public class SalesSummaryResponse {
             this.revenue = revenue;
         }
 
-        public UUID getTierId() {
+        public Long getTierId() {
             return tierId;
         }
 
-        public void setTierId(UUID tierId) {
+        public void setTierId(Long tierId) {
             this.tierId = tierId;
         }
 

@@ -1,6 +1,6 @@
 CREATE TABLE auth.refresh_tokens (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
     token TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),

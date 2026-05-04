@@ -1,28 +1,27 @@
 package com.ticketing.orderservice.dto;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public class OrderItemResponse {
 
-    private UUID tierId;
+    private Long tierId;
     private Integer quantity;
     private BigDecimal price;
 
     public OrderItemResponse() {
     }
 
-    public OrderItemResponse(UUID tierId, Integer quantity, BigDecimal price) {
+    public OrderItemResponse(Long tierId, Integer quantity, BigDecimal price) {
         this.tierId = tierId;
         this.quantity = quantity;
         this.price = price;
     }
 
-    public UUID getTierId() {
+    public Long getTierId() {
         return tierId;
     }
 
-    public void setTierId(UUID tierId) {
+    public void setTierId(Long tierId) {
         this.tierId = tierId;
     }
 

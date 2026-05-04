@@ -3,7 +3,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 
 -- Create venues table
 CREATE TABLE events.venues (
-    id UUID PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     address TEXT NOT NULL,
     city VARCHAR(100) NOT NULL,
@@ -14,9 +14,9 @@ CREATE TABLE events.venues (
 
 -- Create events table
 CREATE TABLE events.events (
-    id UUID PRIMARY KEY,
-    organiser_id UUID NOT NULL,
-    venue_id UUID NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    organiser_id BIGINT NOT NULL,
+    venue_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(50) NOT NULL,
@@ -32,8 +32,8 @@ CREATE TABLE events.events (
 
 -- Create ticket_tiers table
 CREATE TABLE events.ticket_tiers (
-    id UUID PRIMARY KEY,
-    event_id UUID NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    event_id BIGINT NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     price NUMERIC(10,2) NOT NULL,

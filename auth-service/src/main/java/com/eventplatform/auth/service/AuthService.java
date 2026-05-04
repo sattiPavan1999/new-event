@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -47,12 +46,10 @@ public class AuthService {
             throw new InvalidRoleException("Invalid role. Must be BUYER or ORGANISER");
         }
 
-        UUID userId = UUID.randomUUID();
         String passwordHash = passwordEncoder.encode(request.getPassword());
         LocalDateTime now = LocalDateTime.now();
 
         User user = new User();
-        user.setId(userId);
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordHash);
         user.setFullName(request.getFullName());
@@ -61,13 +58,13 @@ public class AuthService {
         user.setCreatedAt(now);
         user.setWalletBalance(new java.math.BigDecimal("10000.00"));
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        String accessToken = jwtUtil.generateAccessToken(userId, user.getEmail(), user.getRole().name());
+        String accessToken = jwtUtil.generateAccessToken(savedUser.getId(), savedUser.getEmail(), savedUser.getRole().name());
 
         auditService.logRegistration(request.getEmail(), request.getRole(), true);
 
-        return buildAuthResponse(accessToken, user);
+        return buildAuthResponse(accessToken, savedUser);
     }
 
     @Transactional

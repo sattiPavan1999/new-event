@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Component
 public class EventServiceClient {
@@ -18,7 +17,7 @@ public class EventServiceClient {
         this.restClient = eventRestClient;
     }
 
-    public Optional<EventServiceResponse> getEvent(UUID eventId) {
+    public Optional<EventServiceResponse> getEvent(Long eventId) {
         EventServiceResponse response = restClient.get()
                 .uri("/api/events/{id}", eventId)
                 .retrieve()

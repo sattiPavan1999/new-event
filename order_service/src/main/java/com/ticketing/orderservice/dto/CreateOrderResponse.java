@@ -2,11 +2,10 @@ package com.ticketing.orderservice.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 public class CreateOrderResponse {
 
-    private UUID orderId;
+    private Long orderId;
     private String status;
     private BigDecimal totalAmount;
     private List<OrderItemResponse> items;
@@ -15,14 +14,14 @@ public class CreateOrderResponse {
     public CreateOrderResponse() {
     }
 
-    public CreateOrderResponse(UUID orderId, String status, BigDecimal totalAmount, List<OrderItemResponse> items) {
+    public CreateOrderResponse(Long orderId, String status, BigDecimal totalAmount, List<OrderItemResponse> items) {
         this.orderId = orderId;
         this.status = status;
         this.totalAmount = totalAmount;
         this.items = items;
     }
 
-    public CreateOrderResponse(UUID orderId, String status, BigDecimal totalAmount, List<OrderItemResponse> items, BigDecimal remainingBalance) {
+    public CreateOrderResponse(Long orderId, String status, BigDecimal totalAmount, List<OrderItemResponse> items, BigDecimal remainingBalance) {
         this.orderId = orderId;
         this.status = status;
         this.totalAmount = totalAmount;
@@ -30,11 +29,11 @@ public class CreateOrderResponse {
         this.remainingBalance = remainingBalance;
     }
 
-    public UUID getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(UUID orderId) {
+    public void setOrderId(Long orderId) {
         this.orderId = orderId;
     }
 

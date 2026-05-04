@@ -13,7 +13,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -34,7 +33,7 @@ class AuthControllerTest {
 
     private UserDto sampleUser() {
         UserDto u = new UserDto();
-        u.setId(UUID.randomUUID());
+        u.setId(1L);
         u.setEmail("test@example.com");
         u.setFullName("Test User");
         u.setRole("BUYER");

@@ -1,11 +1,10 @@
 package com.ticketing.orderservice.dto;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 public class CancelOrderResponse {
 
-    private UUID orderId;
+    private Long orderId;
     private String status;
     private String message;
     private BigDecimal remainingBalance;
@@ -13,18 +12,18 @@ public class CancelOrderResponse {
     public CancelOrderResponse() {
     }
 
-    public CancelOrderResponse(UUID orderId, String status, String message, BigDecimal remainingBalance) {
+    public CancelOrderResponse(Long orderId, String status, String message, BigDecimal remainingBalance) {
         this.orderId = orderId;
         this.status = status;
         this.message = message;
         this.remainingBalance = remainingBalance;
     }
 
-    public UUID getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(UUID orderId) {
+    public void setOrderId(Long orderId) {
         this.orderId = orderId;
     }
 

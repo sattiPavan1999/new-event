@@ -49,7 +49,7 @@ export const orderService = {
     return response.data;
   },
 
-  cancelOrder: async (orderId: string): Promise<CancelOrderResponse> => {
+  cancelOrder: async (orderId: number): Promise<CancelOrderResponse> => {
     const response = await orderApi.post<CancelOrderResponse>(`/api/orders/${orderId}/cancel`);
     return response.data;
   },

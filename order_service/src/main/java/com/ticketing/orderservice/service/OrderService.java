@@ -24,7 +24,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,7 +51,7 @@ public class OrderService {
     }
 
     @Transactional
-    public CreateOrderResponse createOrder(CreateOrderRequest request, UUID buyerId) {
+    public CreateOrderResponse createOrder(CreateOrderRequest request, Long buyerId) {
         EventServiceResponse event = eventServiceClient.getEvent(request.getEventId())
                 .orElseThrow(() -> new EventNotFoundException(request.getEventId()));
 
@@ -60,12 +59,10 @@ public class OrderService {
             throw new InvalidEventStatusException(event.getStatus());
         }
 
-        UUID orderId = UUID.randomUUID();
         Instant now = Instant.now();
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         Order order = new Order();
-        order.setId(orderId);
         order.setBuyerId(buyerId);
         order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(now);
@@ -95,7 +92,6 @@ public class OrderService {
             totalAmount = totalAmount.add(itemTotal);
 
             OrderItem orderItem = new OrderItem();
-            orderItem.setId(UUID.randomUUID());
             orderItem.setOrder(order);
             orderItem.setTierId(tier.getId());
             orderItem.setTierName(tier.getName());
@@ -112,31 +108,31 @@ public class OrderService {
         }
 
         order.setTotalAmount(totalAmount);
-        orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
 
-        auditService.logOrderCreated(orderId, buyerId, request.getItems().size(), totalAmount.toString());
+        auditService.logOrderCreated(savedOrder.getId(), buyerId, request.getItems().size(), totalAmount.toString());
 
         if (mockPaymentCheckout) {
             int debited = walletRepository.debitWallet(buyerId, totalAmount);
             if (debited == 0) {
                 throw new InsufficientWalletBalanceException(totalAmount);
             }
-            for (OrderItem item : order.getItems()) {
+            for (OrderItem item : savedOrder.getItems()) {
                 ticketTierRepository.decrementRemainingQty(item.getTierId(), item.getQuantity());
             }
-            order.setStatus(OrderStatus.CONFIRMED);
-            order.setUpdatedAt(Instant.now());
-            orderRepository.save(order);
-            auditService.logOrderConfirmed(orderId);
+            savedOrder.setStatus(OrderStatus.CONFIRMED);
+            savedOrder.setUpdatedAt(Instant.now());
+            orderRepository.save(savedOrder);
+            auditService.logOrderConfirmed(savedOrder.getId());
             BigDecimal remainingBalance = walletRepository.getBalance(buyerId);
-            return new CreateOrderResponse(orderId, OrderStatus.CONFIRMED.name(), totalAmount, responseItems, remainingBalance);
+            return new CreateOrderResponse(savedOrder.getId(), OrderStatus.CONFIRMED.name(), totalAmount, responseItems, remainingBalance);
         }
 
-        return new CreateOrderResponse(orderId, OrderStatus.PENDING.name(), totalAmount, responseItems);
+        return new CreateOrderResponse(savedOrder.getId(), OrderStatus.PENDING.name(), totalAmount, responseItems);
     }
 
     @Transactional
-    public CancelOrderResponse cancelOrder(UUID orderId, UUID buyerId) {
+    public CancelOrderResponse cancelOrder(Long orderId, Long buyerId) {
         Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
                 .orElseThrow(() -> {
                     if (orderRepository.existsById(orderId)) {
@@ -179,7 +175,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderHistoryResponse getMyOrders(UUID buyerId, Integer page, Integer size) {
+    public OrderHistoryResponse getMyOrders(Long buyerId, Integer page, Integer size) {
         if (page < 0) {
             page = 0;
         }
@@ -204,7 +200,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderDetailResponse getOrderById(UUID orderId, UUID buyerId) {
+    public OrderDetailResponse getOrderById(Long orderId, Long buyerId) {
         Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
                 .orElseThrow(() -> {
                     if (orderRepository.existsById(orderId)) {

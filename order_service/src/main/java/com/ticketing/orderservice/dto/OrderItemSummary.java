@@ -2,11 +2,10 @@ package com.ticketing.orderservice.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 
 public class OrderItemSummary {
 
-    private UUID orderItemId;
+    private Long orderItemId;
     private String tierName;
     private String eventTitle;
     private Instant eventDate;
@@ -17,7 +16,7 @@ public class OrderItemSummary {
     public OrderItemSummary() {
     }
 
-    public OrderItemSummary(UUID orderItemId, String tierName, String eventTitle, Instant eventDate, Integer quantity, BigDecimal unitPrice, String venueName) {
+    public OrderItemSummary(Long orderItemId, String tierName, String eventTitle, Instant eventDate, Integer quantity, BigDecimal unitPrice, String venueName) {
         this.orderItemId = orderItemId;
         this.tierName = tierName;
         this.eventTitle = eventTitle;
@@ -27,11 +26,11 @@ public class OrderItemSummary {
         this.venueName = venueName;
     }
 
-    public UUID getOrderItemId() {
+    public Long getOrderItemId() {
         return orderItemId;
     }
 
-    public void setOrderItemId(UUID orderItemId) {
+    public void setOrderItemId(Long orderItemId) {
         this.orderItemId = orderItemId;
     }
 

@@ -1,17 +1,15 @@
 package com.ticketing.orderservice.exception;
 
-import java.util.UUID;
-
 public class OrderCancellationNotAllowedException extends RuntimeException {
 
-    private final UUID orderId;
+    private final Long orderId;
 
-    public OrderCancellationNotAllowedException(UUID orderId, String reason) {
+    public OrderCancellationNotAllowedException(Long orderId, String reason) {
         super("Cannot cancel order " + orderId + ": " + reason);
         this.orderId = orderId;
     }
 
-    public UUID getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 }

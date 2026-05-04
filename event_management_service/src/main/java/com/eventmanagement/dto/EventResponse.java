@@ -4,13 +4,12 @@ import com.eventmanagement.enums.EventCategory;
 import com.eventmanagement.enums.EventStatus;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class EventResponse {
 
-    private UUID id;
-    private UUID organiserId;
-    private UUID venueId;
+    private Long id;
+    private Long organiserId;
+    private Long venueId;
     private String title;
     private String description;
     private EventCategory category;
@@ -23,7 +22,7 @@ public class EventResponse {
     public EventResponse() {
     }
 
-    public EventResponse(UUID id, UUID organiserId, UUID venueId, String title, String description,
+    public EventResponse(Long id, Long organiserId, Long venueId, String title, String description,
                          EventCategory category, LocalDateTime eventDate, String bannerImageUrl,
                          EventStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -39,27 +38,27 @@ public class EventResponse {
         this.updatedAt = updatedAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public UUID getOrganiserId() {
+    public Long getOrganiserId() {
         return organiserId;
     }
 
-    public void setOrganiserId(UUID organiserId) {
+    public void setOrganiserId(Long organiserId) {
         this.organiserId = organiserId;
     }
 
-    public UUID getVenueId() {
+    public Long getVenueId() {
         return venueId;
     }
 
-    public void setVenueId(UUID venueId) {
+    public void setVenueId(Long venueId) {
         this.venueId = venueId;
     }
 

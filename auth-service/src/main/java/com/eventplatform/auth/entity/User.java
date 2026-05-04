@@ -4,15 +4,15 @@ import com.eventplatform.auth.enums.UserRole;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users", schema = "auth")
 public class User {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private UUID id;
+    private Long id;
 
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
@@ -39,21 +39,11 @@ public class User {
     public User() {
     }
 
-    public User(UUID id, String email, String passwordHash, String fullName, UserRole role, Boolean isActive, LocalDateTime createdAt) {
-        this.id = id;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.fullName = fullName;
-        this.role = role;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

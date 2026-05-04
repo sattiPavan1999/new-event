@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -53,10 +52,14 @@ class EventServiceTest {
 
     @Test
     void createEvent_venueExists_returnsEventResponse() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Venue venue = buildVenue();
         when(venueRepository.findById(venue.getId())).thenReturn(Optional.of(venue));
-        when(eventRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(eventRepository.save(any())).thenAnswer(inv -> {
+            Event e = inv.getArgument(0);
+            e.setId(2L);
+            return e;
+        });
 
         CreateEventRequest request = buildCreateEventRequest(venue.getId());
         EventResponse response = eventService.createEvent(request, organiserId);
@@ -69,23 +72,27 @@ class EventServiceTest {
 
     @Test
     void createEvent_venueNotFound_throwsResourceNotFoundException() {
-        UUID venueId = UUID.randomUUID();
+        Long venueId = 1L;
         when(venueRepository.findById(venueId)).thenReturn(Optional.empty());
 
         CreateEventRequest request = buildCreateEventRequest(venueId);
         assertThrows(ResourceNotFoundException.class,
-                () -> eventService.createEvent(request, UUID.randomUUID()));
+                () -> eventService.createEvent(request, 2L));
     }
 
     // ── addTier ───────────────────────────────────────────────────────────────
 
     @Test
     void addTier_success_returnsTierResponse() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Event event = buildEvent(organiserId);
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
         when(ticketTierRepository.countByEventId(event.getId())).thenReturn(0L);
-        when(ticketTierRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(ticketTierRepository.save(any())).thenAnswer(inv -> {
+            TicketTier t = inv.getArgument(0);
+            t.setId(10L);
+            return t;
+        });
 
         CreateTierRequest request = buildTierRequest();
         TierResponse response = eventService.addTier(event.getId(), request, organiserId);
@@ -97,17 +104,17 @@ class EventServiceTest {
 
     @Test
     void addTier_eventNotFound_throwsResourceNotFoundException() {
-        UUID eventId = UUID.randomUUID();
+        Long eventId = 1L;
         when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> eventService.addTier(eventId, buildTierRequest(), UUID.randomUUID()));
+                () -> eventService.addTier(eventId, buildTierRequest(), 2L));
     }
 
     @Test
     void addTier_ownershipViolation_throwsBusinessRuleViolation() {
-        UUID organiserId = UUID.randomUUID();
-        Event event = buildEvent(UUID.randomUUID()); // different owner
+        Long organiserId = 1L;
+        Event event = buildEvent(2L); // different owner
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
 
         assertThrows(BusinessRuleViolationException.class,
@@ -116,7 +123,7 @@ class EventServiceTest {
 
     @Test
     void addTier_maxTiersExceeded_throwsBusinessRuleViolation() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Event event = buildEvent(organiserId);
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
         when(ticketTierRepository.countByEventId(event.getId())).thenReturn(10L);
@@ -129,7 +136,7 @@ class EventServiceTest {
 
     @Test
     void publishEvent_draftWithActiveTier_returnsPublishedEvent() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Event event = buildEvent(organiserId);
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
         when(ticketTierRepository.countByEventIdAndStatus(event.getId(), TierStatus.ACTIVE)).thenReturn(1L);
@@ -143,7 +150,7 @@ class EventServiceTest {
 
     @Test
     void publishEvent_noActiveTiers_throwsBusinessRuleViolation() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Event event = buildEvent(organiserId);
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
         when(ticketTierRepository.countByEventIdAndStatus(event.getId(), TierStatus.ACTIVE)).thenReturn(0L);
@@ -154,7 +161,7 @@ class EventServiceTest {
 
     @Test
     void publishEvent_alreadyPublished_throwsBusinessRuleViolation() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Event event = buildEvent(organiserId);
         event.setStatus(EventStatus.PUBLISHED);
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
@@ -167,7 +174,7 @@ class EventServiceTest {
 
     @Test
     void cancelEvent_success_returnsCancelledEvent() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Event event = buildEvent(organiserId);
         event.setStatus(EventStatus.PUBLISHED);
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
@@ -182,7 +189,7 @@ class EventServiceTest {
 
     @Test
     void getEventDetail_publishedEvent_returnsDetail() {
-        Event event = buildEvent(UUID.randomUUID());
+        Event event = buildEvent(1L);
         event.setStatus(EventStatus.PUBLISHED);
         when(eventRepository.findWithDetailsById(event.getId())).thenReturn(Optional.of(event));
 
@@ -194,7 +201,7 @@ class EventServiceTest {
 
     @Test
     void getEventDetail_draftEvent_throwsResourceNotFoundException() {
-        Event event = buildEvent(UUID.randomUUID());
+        Event event = buildEvent(1L);
         // status is DRAFT by default in buildEvent
         when(eventRepository.findWithDetailsById(event.getId())).thenReturn(Optional.of(event));
 
@@ -204,7 +211,7 @@ class EventServiceTest {
 
     @Test
     void getEventDetail_notFound_throwsResourceNotFoundException() {
-        UUID eventId = UUID.randomUUID();
+        Long eventId = 99L;
         when(eventRepository.findWithDetailsById(eventId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
@@ -215,7 +222,7 @@ class EventServiceTest {
 
     @Test
     void browseEvents_returnsPagedResults() {
-        Event event = buildEvent(UUID.randomUUID());
+        Event event = buildEvent(1L);
         event.setStatus(EventStatus.PUBLISHED);
         Page<Event> page = new PageImpl<>(List.of(event));
         when(eventRepository.findPublishedEvents(any(), any(), any(), any(), any(), any(Pageable.class)))
@@ -242,7 +249,7 @@ class EventServiceTest {
 
     @Test
     void getSalesSummary_success_returnsCorrectTotals() {
-        UUID organiserId = UUID.randomUUID();
+        Long organiserId = 1L;
         Event event = buildEvent(organiserId);
         TicketTier tier = buildTier(event, 100, 80); // 20 sold
         event.setTicketTiers(List.of(tier));
@@ -258,7 +265,7 @@ class EventServiceTest {
 
     private Venue buildVenue() {
         Venue venue = new Venue();
-        venue.setId(UUID.randomUUID());
+        venue.setId(1L);
         venue.setName("Test Venue");
         venue.setAddress("123 Main St");
         venue.setCity("Mumbai");
@@ -267,18 +274,19 @@ class EventServiceTest {
         return venue;
     }
 
-    private Event buildEvent(UUID organiserId) {
+    private Event buildEvent(Long organiserId) {
         Venue venue = buildVenue();
         Event event = new Event(
-                UUID.randomUUID(), organiserId, venue,
+                organiserId, venue,
                 "Test Event", "Description", EventCategory.CONCERT,
                 LocalDateTime.now().plusDays(30), null,
                 EventStatus.DRAFT, LocalDateTime.now(), LocalDateTime.now()
         );
+        event.setId(1L);
         return event;
     }
 
-    private CreateEventRequest buildCreateEventRequest(UUID venueId) {
+    private CreateEventRequest buildCreateEventRequest(Long venueId) {
         CreateEventRequest request = new CreateEventRequest();
         request.setTitle("Test Event");
         request.setDescription("Description");
@@ -300,7 +308,7 @@ class EventServiceTest {
 
     private TicketTier buildTier(Event event, int totalQty, int remainingQty) {
         TicketTier tier = new TicketTier();
-        tier.setId(UUID.randomUUID());
+        tier.setId(1L);
         tier.setEvent(event);
         tier.setName("General");
         tier.setPrice(new BigDecimal("1000.00"));

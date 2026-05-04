@@ -12,8 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -33,7 +31,7 @@ public class OrderController {
 
         String token = extractToken(authorizationHeader);
         jwtUtil.validateBuyerRole(token);
-        UUID buyerId = jwtUtil.getBuyerIdFromToken(token);
+        Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
         CreateOrderResponse response = orderService.createOrder(request, buyerId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -47,7 +45,7 @@ public class OrderController {
 
         String token = extractToken(authorizationHeader);
         jwtUtil.validateBuyerRole(token);
-        UUID buyerId = jwtUtil.getBuyerIdFromToken(token);
+        Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
         OrderHistoryResponse response = orderService.getMyOrders(buyerId, page, size);
         return ResponseEntity.ok(response);
@@ -55,12 +53,12 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderDetailResponse> getOrderById(
-            @PathVariable UUID id,
+            @PathVariable Long id,
             @RequestHeader("Authorization") String authorizationHeader) {
 
         String token = extractToken(authorizationHeader);
         jwtUtil.validateBuyerRole(token);
-        UUID buyerId = jwtUtil.getBuyerIdFromToken(token);
+        Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
         OrderDetailResponse response = orderService.getOrderById(id, buyerId);
         return ResponseEntity.ok(response);
@@ -68,12 +66,12 @@ public class OrderController {
 
     @PostMapping("/{id}/cancel")
     public ResponseEntity<CancelOrderResponse> cancelOrder(
-            @PathVariable UUID id,
+            @PathVariable Long id,
             @RequestHeader("Authorization") String authorizationHeader) {
 
         String token = extractToken(authorizationHeader);
         jwtUtil.validateBuyerRole(token);
-        UUID buyerId = jwtUtil.getBuyerIdFromToken(token);
+        Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
         CancelOrderResponse response = orderService.cancelOrder(id, buyerId);
         return ResponseEntity.ok(response);

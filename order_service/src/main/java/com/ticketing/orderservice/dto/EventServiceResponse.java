@@ -2,23 +2,23 @@ package com.ticketing.orderservice.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 public class EventServiceResponse {
 
-    private UUID id;
+    private Long id;
     private String title;
     private String description;
     private String category;
     private String eventDate;
     private String status;
     private List<TierResponse> tiers;
+    private VenueInfo venue;
 
     public EventServiceResponse() {
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -38,7 +38,6 @@ public class EventServiceResponse {
     public List<TierResponse> getTiers() { return tiers; }
     public void setTiers(List<TierResponse> tiers) { this.tiers = tiers; }
 
-    private VenueInfo venue;
     public VenueInfo getVenue() { return venue; }
     public void setVenue(VenueInfo venue) { this.venue = venue; }
 
@@ -50,8 +49,8 @@ public class EventServiceResponse {
 
     public static class TierResponse {
 
-        private UUID id;
-        private UUID eventId;
+        private Long id;
+        private Long eventId;
         private String name;
         private String description;
         private BigDecimal price;
@@ -65,11 +64,11 @@ public class EventServiceResponse {
         public TierResponse() {
         }
 
-        public UUID getId() { return id; }
-        public void setId(UUID id) { this.id = id; }
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
 
-        public UUID getEventId() { return eventId; }
-        public void setEventId(UUID eventId) { this.eventId = eventId; }
+        public Long getEventId() { return eventId; }
+        public void setEventId(Long eventId) { this.eventId = eventId; }
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }

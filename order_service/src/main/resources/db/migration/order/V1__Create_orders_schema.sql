@@ -3,8 +3,8 @@ CREATE SCHEMA IF NOT EXISTS orders;
 
 -- Create orders table
 CREATE TABLE IF NOT EXISTS orders.orders (
-    id UUID PRIMARY KEY,
-    buyer_id UUID NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    buyer_id BIGINT NOT NULL,
     status VARCHAR(30) NOT NULL CHECK (status IN ('PENDING', 'CONFIRMED', 'FAILED')),
     total_amount NUMERIC(10, 2) NOT NULL,
     stripe_session_id TEXT,
@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS orders.orders (
 
 -- Create order_items table
 CREATE TABLE IF NOT EXISTS orders.order_items (
-    id UUID PRIMARY KEY,
-    order_id UUID NOT NULL,
-    tier_id UUID NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
+    order_id BIGINT NOT NULL,
+    tier_id BIGINT NOT NULL,
     tier_name VARCHAR(100) NOT NULL,
     event_title VARCHAR(255) NOT NULL,
     event_date TIMESTAMP NOT NULL,
@@ -33,4 +33,3 @@ CREATE INDEX idx_orders_created_at ON orders.orders(created_at);
 CREATE INDEX idx_orders_stripe_session_id ON orders.orders(stripe_session_id);
 CREATE INDEX idx_order_items_order_id ON orders.order_items(order_id);
 CREATE INDEX idx_order_items_tier_id ON orders.order_items(tier_id);
-

@@ -8,8 +8,6 @@ import com.eventmanagement.service.EventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/events")
@@ -41,7 +39,7 @@ public class PublicEventController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EventDetailResponse> getEventDetail(@PathVariable("id") UUID eventId) {
+    public ResponseEntity<EventDetailResponse> getEventDetail(@PathVariable("id") Long eventId) {
         EventDetailResponse response = eventService.getEventDetail(eventId);
         return ResponseEntity.ok(response);
     }

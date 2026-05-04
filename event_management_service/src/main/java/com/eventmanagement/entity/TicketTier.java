@@ -1,27 +1,19 @@
 package com.eventmanagement.entity;
 
 import com.eventmanagement.enums.TierStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "ticket_tiers", schema = "events")
 public class TicketTier {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private UUID id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
@@ -61,11 +53,10 @@ public class TicketTier {
     public TicketTier() {
     }
 
-    public TicketTier(UUID id, Event event, String name, String description, BigDecimal price,
+    public TicketTier(Event event, String name, String description, BigDecimal price,
                       Integer totalQty, Integer remainingQty, Integer maxPerOrder,
                       LocalDateTime saleStartsAt, LocalDateTime saleEndsAt, TierStatus status,
                       LocalDateTime createdAt) {
-        this.id = id;
         this.event = event;
         this.name = name;
         this.description = description;
@@ -79,11 +70,11 @@ public class TicketTier {
         this.createdAt = createdAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

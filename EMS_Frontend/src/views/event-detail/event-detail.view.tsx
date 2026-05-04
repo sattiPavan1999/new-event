@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { eventService } from '@/services/event';
-import { orderService } from '@/services/order';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import type { TicketTier } from '@/types/event';
 import { BuyerLayout } from '@/components/buyer-layout';
 import { Button } from '@/components/button';
@@ -43,8 +43,8 @@ const BADGE_STYLES: Record<Exclude<TierUIStatus, 'AVAILABLE'>, { label: string; 
 export const EventDetailView: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const { user, updateWalletBalance } = useAuth();
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const cart = useCart();
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['event', eventId],
@@ -54,8 +54,6 @@ export const EventDetailView: React.FC = () => {
   });
 
   const [ticketSelections, setTicketSelections] = useState<Record<string, number>>({});
-  const [buyError, setBuyError] = useState<string | null>(null);
-  const [buying, setBuying] = useState(false);
 
   useEffect(() => {
     if (event?.tiers) {
@@ -73,46 +71,26 @@ export const EventDetailView: React.FC = () => {
     setTicketSelections((prev) => ({ ...prev, [tierId]: clamped }));
   };
 
-  const handleBuyNow = async () => {
+  const handleAddToCart = () => {
     if (!user) {
       navigate('/login');
       return;
     }
     if (!event) return;
-    setBuyError(null);
-    setBuying(true);
-    try {
-      const selectedTiers = event.tiers.filter((tier) => (ticketSelections[tier.id] ?? 0) > 0);
-      const items = selectedTiers.map((tier) => ({ tierId: tier.id, quantity: ticketSelections[tier.id] }));
 
-      const response = await orderService.createOrder({ eventId: event.id, items });
-
-      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
-      if (response.remainingBalance !== undefined) {
-        updateWalletBalance(response.remainingBalance);
-      }
-
-      navigate(`/orders/${response.orderId}`, {
-        state: {
-          orderId: response.orderId,
-          status: response.status,
-          eventTitle: event.title,
-          totalAmount: response.totalAmount,
-          items: selectedTiers.map((tier) => ({
-            tierName: tier.name,
-            quantity: ticketSelections[tier.id],
-            unitPrice: tier.price,
-          })),
-        },
-      });
-    } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Failed to place order. Please try again.';
-      setBuyError(msg);
-    } finally {
-      setBuying(false);
-    }
+    const selectedTiers = event.tiers!.filter((tier) => (ticketSelections[tier.id] ?? 0) > 0);
+    cart.addItems(
+      event.id,
+      event.title,
+      selectedTiers.map((tier) => ({
+        tierId: tier.id,
+        tierName: tier.name,
+        quantity: ticketSelections[tier.id],
+        unitPrice: tier.price,
+        maxQty: getMaxSelectableQty(tier),
+      }))
+    );
+    navigate('/cart');
   };
 
   const now = new Date();
@@ -291,12 +269,9 @@ export const EventDetailView: React.FC = () => {
                   <p className="text-gray-500 text-sm">No tickets available for this event.</p>
                 )}
 
-                {buyError && (
-                  <Alert variant="error">{buyError}</Alert>
-                )}
                 {canBuy ? (
-                  <Button fullWidth disabled={!hasAnySelection || buying} onClick={handleBuyNow}>
-                    {buying ? 'Placing Order…' : 'Buy Now'}
+                  <Button fullWidth disabled={!hasAnySelection} onClick={handleAddToCart}>
+                    Add to Cart
                   </Button>
                 ) : (
                   <p className="text-sm text-center text-gray-400 py-2">

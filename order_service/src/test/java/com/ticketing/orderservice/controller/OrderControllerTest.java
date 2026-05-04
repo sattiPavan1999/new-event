@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -35,21 +34,30 @@ class OrderControllerTest {
     @MockitoBean private JwtUtil jwtUtil;
     @MockitoBean private AuditService auditService;
 
-    private final UUID buyerId = UUID.randomUUID();
+    private final Long buyerId = 1L;
     private final String authHeader = "Bearer valid.jwt.token";
+
+    private CreateOrderRequest buildOrderRequest(Long eventId, Long tierId, int qty) {
+        OrderItemRequest item = new OrderItemRequest();
+        item.setTierId(tierId);
+        item.setQuantity(qty);
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setEventId(eventId);
+        request.setItems(List.of(item));
+        return request;
+    }
 
     @Test
     void createOrder_validRequest_returnsCreated() throws Exception {
-        UUID orderId = UUID.randomUUID();
+        Long orderId = 10L;
         CreateOrderResponse response = new CreateOrderResponse(
                 orderId, "CONFIRMED", new BigDecimal("3000.00"),
-                List.of(new OrderItemResponse(UUID.randomUUID(), 2, new BigDecimal("1500.00"))));
+                List.of(new OrderItemResponse(1L, 2, new BigDecimal("1500.00"))));
 
         when(jwtUtil.getBuyerIdFromToken("valid.jwt.token")).thenReturn(buyerId);
         when(orderService.createOrder(any(), eq(buyerId))).thenReturn(response);
 
-        CreateOrderRequest request = new CreateOrderRequest(UUID.randomUUID(),
-                List.of(new OrderItemRequest(UUID.randomUUID(), 2)));
+        CreateOrderRequest request = buildOrderRequest(10L, 100L, 2);
 
         mockMvc.perform(post("/api/orders")
                         .header("Authorization", authHeader)
@@ -57,13 +65,12 @@ class OrderControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("CONFIRMED"))
-                .andExpect(jsonPath("$.orderId").value(orderId.toString()));
+                .andExpect(jsonPath("$.orderId").value(orderId));
     }
 
     @Test
     void createOrder_missingAuthHeader_returnsUnauthorized() throws Exception {
-        CreateOrderRequest request = new CreateOrderRequest(UUID.randomUUID(),
-                List.of(new OrderItemRequest(UUID.randomUUID(), 1)));
+        CreateOrderRequest request = buildOrderRequest(10L, 100L, 1);
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -76,8 +83,7 @@ class OrderControllerTest {
         doThrow(new UnauthorizedException("BUYER role required"))
                 .when(jwtUtil).validateBuyerRole("valid.jwt.token");
 
-        CreateOrderRequest request = new CreateOrderRequest(UUID.randomUUID(),
-                List.of(new OrderItemRequest(UUID.randomUUID(), 1)));
+        CreateOrderRequest request = buildOrderRequest(10L, 100L, 1);
 
         mockMvc.perform(post("/api/orders")
                         .header("Authorization", authHeader)
@@ -102,7 +108,7 @@ class OrderControllerTest {
 
     @Test
     void getOrderById_validRequest_returnsOk() throws Exception {
-        UUID orderId = UUID.randomUUID();
+        Long orderId = 10L;
         OrderDetailResponse detail = new OrderDetailResponse(
                 orderId, "CONFIRMED", new BigDecimal("3000.00"),
                 null, Instant.now(), Instant.now(), Collections.emptyList());
@@ -124,7 +130,7 @@ class OrderControllerTest {
 
     @Test
     void cancelOrder_validRequest_returnsOk() throws Exception {
-        UUID orderId = UUID.randomUUID();
+        Long orderId = 10L;
         CancelOrderResponse response = new CancelOrderResponse(
                 orderId, "CANCELLED", "Order cancelled. ₹3000.00 credited back to your wallet within 1 day.",
                 new BigDecimal("7000.00"));
@@ -136,18 +142,18 @@ class OrderControllerTest {
                         .header("Authorization", authHeader))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.orderId").value(orderId.toString()));
+                .andExpect(jsonPath("$.orderId").value(orderId));
     }
 
     @Test
     void cancelOrder_missingAuth_returnsUnauthorized() throws Exception {
-        mockMvc.perform(post("/api/orders/{id}/cancel", UUID.randomUUID()))
+        mockMvc.perform(post("/api/orders/{id}/cancel", 99L))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void cancelOrder_notAllowed_returnsConflict() throws Exception {
-        UUID orderId = UUID.randomUUID();
+        Long orderId = 10L;
         when(jwtUtil.getBuyerIdFromToken("valid.jwt.token")).thenReturn(buyerId);
         when(orderService.cancelOrder(orderId, buyerId))
                 .thenThrow(new OrderCancellationNotAllowedException(orderId, "only CONFIRMED orders can be cancelled"));
@@ -160,7 +166,7 @@ class OrderControllerTest {
 
     @Test
     void cancelOrder_insufficientBalance_returnsPaymentRequired() throws Exception {
-        UUID orderId = UUID.randomUUID();
+        Long orderId = 10L;
         when(jwtUtil.getBuyerIdFromToken("valid.jwt.token")).thenReturn(buyerId);
         when(orderService.cancelOrder(orderId, buyerId))
                 .thenThrow(new InsufficientWalletBalanceException(new BigDecimal("500.00")));

@@ -4,12 +4,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.UUID;
 
 public class CreateOrderRequest {
 
     @NotNull(message = "eventId is required")
-    private UUID eventId;
+    private Long eventId;
 
     @NotNull(message = "items must not be empty")
     @Size(min = 1, message = "items must not be empty")
@@ -18,16 +17,11 @@ public class CreateOrderRequest {
     public CreateOrderRequest() {
     }
 
-    public CreateOrderRequest(UUID eventId, List<OrderItemRequest> items) {
-        this.eventId = eventId;
-        this.items = items;
-    }
-
-    public UUID getEventId() {
+    public Long getEventId() {
         return eventId;
     }
 
-    public void setEventId(UUID eventId) {
+    public void setEventId(Long eventId) {
         this.eventId = eventId;
     }
 

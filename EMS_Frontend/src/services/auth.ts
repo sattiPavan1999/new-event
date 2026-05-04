@@ -28,7 +28,7 @@ authApi.interceptors.request.use(
 authApi.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && error.config?.url !== "/api/auth/login") {
       setAuthToken(null);
       window.location.href = "/login";
     }

@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class CreateEventRequest {
 
@@ -23,21 +22,11 @@ public class CreateEventRequest {
     private LocalDateTime eventDate;
 
     @NotNull(message = "Venue ID is required")
-    private UUID venueId;
+    private Long venueId;
 
     private String bannerImageUrl;
 
     public CreateEventRequest() {
-    }
-
-    public CreateEventRequest(String title, String description, EventCategory category,
-                              LocalDateTime eventDate, UUID venueId, String bannerImageUrl) {
-        this.title = title;
-        this.description = description;
-        this.category = category;
-        this.eventDate = eventDate;
-        this.venueId = venueId;
-        this.bannerImageUrl = bannerImageUrl;
     }
 
     public String getTitle() {
@@ -72,11 +61,11 @@ public class CreateEventRequest {
         this.eventDate = eventDate;
     }
 
-    public UUID getVenueId() {
+    public Long getVenueId() {
         return venueId;
     }
 
-    public void setVenueId(UUID venueId) {
+    public void setVenueId(Long venueId) {
         this.venueId = venueId;
     }
 

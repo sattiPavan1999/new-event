@@ -1,17 +1,15 @@
 package com.ticketing.orderservice.exception;
 
-import java.util.UUID;
-
 public class EventNotFoundException extends RuntimeException {
 
-    private final UUID eventId;
+    private final Long eventId;
 
-    public EventNotFoundException(UUID eventId) {
+    public EventNotFoundException(Long eventId) {
         super("Event not found with id: " + eventId);
         this.eventId = eventId;
     }
 
-    public UUID getEventId() {
+    public Long getEventId() {
         return eventId;
     }
 }

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -32,13 +31,13 @@ public class JwtUtil {
         }
     }
 
-    public UUID getBuyerIdFromToken(String token) {
+    public Long getBuyerIdFromToken(String token) {
         Claims claims = validateTokenAndGetClaims(token);
         String subject = claims.getSubject();
         if (subject == null) {
             throw new UnauthorizedException("Token does not contain subject");
         }
-        return UUID.fromString(subject);
+        return Long.parseLong(subject);
     }
 
     public String getRoleFromToken(String token) {

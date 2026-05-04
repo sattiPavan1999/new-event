@@ -13,7 +13,6 @@ import org.springframework.test.context.ActiveProfiles;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,9 +24,8 @@ class OrderRepositoryTest {
     @Autowired
     private OrderRepository orderRepository;
 
-    private Order saveOrder(UUID buyerId, OrderStatus status) {
+    private Order saveOrder(Long buyerId, OrderStatus status) {
         Order order = new Order();
-        order.setId(UUID.randomUUID());
         order.setBuyerId(buyerId);
         order.setStatus(status);
         order.setTotalAmount(new BigDecimal("2500.00"));
@@ -38,11 +36,11 @@ class OrderRepositoryTest {
 
     @Test
     void findByBuyerIdAndStatus_returnsOnlyMatchingOrders() {
-        UUID buyerId = UUID.randomUUID();
+        Long buyerId = 1L;
         saveOrder(buyerId, OrderStatus.CONFIRMED);
         saveOrder(buyerId, OrderStatus.CONFIRMED);
         saveOrder(buyerId, OrderStatus.PENDING);
-        saveOrder(UUID.randomUUID(), OrderStatus.CONFIRMED);
+        saveOrder(2L, OrderStatus.CONFIRMED);
 
         Page<Order> page = orderRepository.findByBuyerIdAndStatus(
                 buyerId, OrderStatus.CONFIRMED, PageRequest.of(0, 10));
@@ -55,7 +53,7 @@ class OrderRepositoryTest {
 
     @Test
     void findByIdAndBuyerId_correctOwner_returnsOrder() {
-        UUID buyerId = UUID.randomUUID();
+        Long buyerId = 1L;
         Order saved = saveOrder(buyerId, OrderStatus.CONFIRMED);
 
         Optional<Order> found = orderRepository.findByIdAndBuyerId(saved.getId(), buyerId);
@@ -66,22 +64,22 @@ class OrderRepositoryTest {
 
     @Test
     void findByIdAndBuyerId_wrongOwner_returnsEmpty() {
-        UUID buyerId = UUID.randomUUID();
+        Long buyerId = 1L;
         Order saved = saveOrder(buyerId, OrderStatus.CONFIRMED);
 
-        Optional<Order> found = orderRepository.findByIdAndBuyerId(saved.getId(), UUID.randomUUID());
+        Optional<Order> found = orderRepository.findByIdAndBuyerId(saved.getId(), 999L);
 
         assertFalse(found.isPresent());
     }
 
     @Test
     void existsById_existingOrder_returnsTrue() {
-        Order saved = saveOrder(UUID.randomUUID(), OrderStatus.PENDING);
+        Order saved = saveOrder(1L, OrderStatus.PENDING);
         assertTrue(orderRepository.existsById(saved.getId()));
     }
 
     @Test
     void existsById_missingOrder_returnsFalse() {
-        assertFalse(orderRepository.existsById(UUID.randomUUID()));
+        assertFalse(orderRepository.existsById(999L));
     }
 }

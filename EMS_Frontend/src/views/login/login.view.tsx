@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authService } from '@/services/auth';
@@ -8,6 +8,8 @@ import { Button } from '@/components/button';
 import { Alert } from '@/components/alert';
 import type { LoginRequest } from '@/types/auth';
 
+const ERROR_DISPLAY_MS = 5000;
+
 export const LoginView: React.FC = () => {
   const navigate = useNavigate();
   const { login: setAuthState } = useAuth();
@@ -16,30 +18,41 @@ export const LoginView: React.FC = () => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string>('');
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, []);
+
+  const showTimedError = (msg: string) => {
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    setGeneralError(msg);
+    errorTimerRef.current = setTimeout(() => {
+      setGeneralError('');
+      errorTimerRef.current = null;
+    }, ERROR_DISPLAY_MS);
+  };
 
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginRequest) => authService.login(credentials),
     onSuccess: (data) => {
-      // Store auth state
       setAuthState(data);
-
-      // Redirect based on role
       const redirectPath = data.user.role === 'BUYER' ? '/events' : '/organiser/events';
       navigate(redirectPath);
     },
-    onError: (error: { response?: { status?: number; data?: { error?: string } }; code?: string; message?: string }) => {
-      // Clear password for security
+    onError: (error: { response?: { status?: number; data?: { errorCode?: string; message?: string } }; code?: string; message?: string }) => {
       setPassword('');
 
-      // Handle different error responses
       if (error.response?.status === 401) {
-        setGeneralError(error.response.data?.error || 'Invalid email or password');
+        showTimedError('Wrong credentials');
       } else if (error.response?.status === 403) {
-        setGeneralError(error.response.data?.error || 'Your account has been deactivated. Please contact support.');
+        showTimedError(error.response.data?.message || 'Your account has been deactivated. Please contact support.');
       } else if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
-        setGeneralError('Connection timeout. Please check your internet and try again.');
+        showTimedError('Connection timeout. Please check your internet and try again.');
       } else {
-        setGeneralError('An error occurred. Please try again.');
+        showTimedError('An error occurred. Please try again.');
       }
     },
   });
@@ -63,6 +76,10 @@ export const LoginView: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (errorTimerRef.current) {
+      clearTimeout(errorTimerRef.current);
+      errorTimerRef.current = null;
+    }
     setGeneralError('');
     setErrors({});
 

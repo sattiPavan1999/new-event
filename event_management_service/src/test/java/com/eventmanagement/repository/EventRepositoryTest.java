@@ -15,7 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,25 +26,24 @@ class EventRepositoryTest {
     @Autowired private EventRepository eventRepository;
     @Autowired private VenueRepository venueRepository;
 
-    private UUID organiserId;
+    private Long organiserId;
     private Venue venue;
 
     @BeforeEach
     void setUp() {
-        organiserId = UUID.randomUUID();
+        organiserId = 1L;
         venue = new Venue();
-        venue.setId(UUID.randomUUID());
         venue.setName("Test Venue");
         venue.setAddress("123 Main St");
         venue.setCity("Mumbai");
         venue.setCountry("India");
         venue.setCapacity(500);
-        venueRepository.save(venue);
+        venue = venueRepository.save(venue);
     }
 
-    private Event saveEvent(UUID orgId, EventStatus status, LocalDateTime eventDate) {
-        Event e = new Event(UUID.randomUUID(), orgId, venue,
-                "Event " + UUID.randomUUID().toString().substring(0, 8),
+    private Event saveEvent(Long orgId, EventStatus status, LocalDateTime eventDate) {
+        Event e = new Event(orgId, venue,
+                "Test Event",
                 "Desc", EventCategory.CONCERT, eventDate, null, status,
                 LocalDateTime.now(), LocalDateTime.now());
         return eventRepository.save(e);
@@ -55,7 +53,7 @@ class EventRepositoryTest {
     void findByOrganiserIdOrderByCreatedAtDesc_returnsOnlyOrganizerEvents() {
         saveEvent(organiserId, EventStatus.DRAFT, LocalDateTime.now().plusDays(10));
         saveEvent(organiserId, EventStatus.PUBLISHED, LocalDateTime.now().plusDays(20));
-        saveEvent(UUID.randomUUID(), EventStatus.DRAFT, LocalDateTime.now().plusDays(5));
+        saveEvent(99L, EventStatus.DRAFT, LocalDateTime.now().plusDays(5));
 
         Page<Event> page = eventRepository.findByOrganiserIdOrderByCreatedAtDesc(
                 organiserId, PageRequest.of(0, 10));
@@ -67,7 +65,7 @@ class EventRepositoryTest {
     @Test
     void findByOrganiserIdOrderByCreatedAtDesc_emptyForUnknownOrganizer() {
         Page<Event> page = eventRepository.findByOrganiserIdOrderByCreatedAtDesc(
-                UUID.randomUUID(), PageRequest.of(0, 10));
+                999L, PageRequest.of(0, 10));
 
         assertEquals(0, page.getTotalElements());
     }
@@ -102,7 +100,7 @@ class EventRepositoryTest {
     @Test
     void findPublishedEvents_filterByCategory() {
         saveEvent(organiserId, EventStatus.PUBLISHED, LocalDateTime.now().plusDays(5));
-        Event sportsEvent = new Event(UUID.randomUUID(), organiserId, venue,
+        Event sportsEvent = new Event(organiserId, venue,
                 "Sports Day", "Desc", EventCategory.SPORTS,
                 LocalDateTime.now().plusDays(5), null, EventStatus.PUBLISHED,
                 LocalDateTime.now(), LocalDateTime.now());

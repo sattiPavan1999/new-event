@@ -1,10 +1,8 @@
 package com.eventmanagement.dto;
 
-import java.util.UUID;
-
 public class VenueDto {
 
-    private UUID id;
+    private Long id;
     private String name;
     private String address;
     private String city;
@@ -14,7 +12,7 @@ public class VenueDto {
     public VenueDto() {
     }
 
-    public VenueDto(UUID id, String name, String address, String city, String country, Integer capacity) {
+    public VenueDto(Long id, String name, String address, String city, String country, Integer capacity) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -23,11 +21,11 @@ public class VenueDto {
         this.capacity = capacity;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

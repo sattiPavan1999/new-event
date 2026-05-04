@@ -3,11 +3,10 @@ package com.ticketing.orderservice.dto;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public class OrderSummary {
 
-    private UUID orderId;
+    private Long orderId;
     private String status;
     private BigDecimal totalAmount;
     private Instant createdAt;
@@ -16,7 +15,7 @@ public class OrderSummary {
     public OrderSummary() {
     }
 
-    public OrderSummary(UUID orderId, String status, BigDecimal totalAmount, Instant createdAt, List<OrderItemSummary> items) {
+    public OrderSummary(Long orderId, String status, BigDecimal totalAmount, Instant createdAt, List<OrderItemSummary> items) {
         this.orderId = orderId;
         this.status = status;
         this.totalAmount = totalAmount;
@@ -24,11 +23,11 @@ public class OrderSummary {
         this.items = items;
     }
 
-    public UUID getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(UUID orderId) {
+    public void setOrderId(Long orderId) {
         this.orderId = orderId;
     }
 

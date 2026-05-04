@@ -59,7 +59,7 @@ export const eventService = {
     return response.data;
   },
 
-  getOrganiserEvent: async (eventId: string): Promise<OrganiserEvent> => {
+  getOrganiserEvent: async (eventId: number): Promise<OrganiserEvent> => {
     const response = await eventApi.get(`/api/organiser/events/${eventId}`);
     return response.data;
   },
@@ -70,35 +70,35 @@ export const eventService = {
   },
 
   updateEvent: async (
-    eventId: string,
+    eventId: number,
     data: UpdateEventRequest,
   ): Promise<OrganiserEvent> => {
     const response = await eventApi.put(`/api/organiser/events/${eventId}`, data);
     return response.data;
   },
 
-  cancelEvent: async (eventId: string): Promise<OrganiserEvent> => {
+  cancelEvent: async (eventId: number): Promise<OrganiserEvent> => {
     const response = await eventApi.patch(
       `/api/organiser/events/${eventId}/cancel`,
     );
     return response.data;
   },
 
-  publishEvent: async (eventId: string): Promise<OrganiserEvent> => {
+  publishEvent: async (eventId: number): Promise<OrganiserEvent> => {
     const response = await eventApi.patch(
       `/api/organiser/events/${eventId}/publish`,
     );
     return response.data;
   },
 
-  getSalesSummary: async (eventId: string): Promise<SalesSummary> => {
+  getSalesSummary: async (eventId: number): Promise<SalesSummary> => {
     const response = await eventApi.get(`/api/organiser/events/${eventId}/summary`);
     return response.data;
   },
 
   // Tier endpoints
   createTier: async (
-    eventId: string,
+    eventId: number,
     data: CreateTierRequest,
   ): Promise<TicketTier> => {
     const response = await eventApi.post(
@@ -109,8 +109,8 @@ export const eventService = {
   },
 
   updateTier: async (
-    eventId: string,
-    tierId: string,
+    eventId: number,
+    tierId: number,
     data: UpdateTierRequest,
   ): Promise<TicketTier> => {
     const response = await eventApi.put(
@@ -120,7 +120,7 @@ export const eventService = {
     return response.data;
   },
 
-  deleteTier: async (eventId: string, tierId: string): Promise<void> => {
+  deleteTier: async (eventId: number, tierId: number): Promise<void> => {
     await eventApi.delete(`/api/organiser/events/${eventId}/tiers/${tierId}`);
   },
 
@@ -141,7 +141,7 @@ export const eventService = {
     return response.data;
   },
 
-  getPublicEvent: async (eventId: string): Promise<OrganiserEvent> => {
+  getPublicEvent: async (eventId: number): Promise<OrganiserEvent> => {
     const response = await eventApi.get(`/api/events/${eventId}`);
     return response.data;
   },

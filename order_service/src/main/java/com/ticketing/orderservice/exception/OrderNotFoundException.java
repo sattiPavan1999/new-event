@@ -1,17 +1,15 @@
 package com.ticketing.orderservice.exception;
 
-import java.util.UUID;
-
 public class OrderNotFoundException extends RuntimeException {
 
-    private final UUID orderId;
+    private final Long orderId;
 
-    public OrderNotFoundException(UUID orderId) {
+    public OrderNotFoundException(Long orderId) {
         super("Order not found with id: " + orderId);
         this.orderId = orderId;
     }
 
-    public UUID getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 }

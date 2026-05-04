@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -34,8 +33,8 @@ class OrganiserEventControllerTest {
     @MockitoBean private EventService eventService;
     @MockitoBean private JwtUtil jwtUtil;
 
-    private final UUID organiserId = UUID.randomUUID();
-    private final UUID eventId = UUID.randomUUID();
+    private final Long organiserId = 1L;
+    private final Long eventId = 2L;
 
     @BeforeEach
     void stubJwt() {
@@ -46,7 +45,7 @@ class OrganiserEventControllerTest {
         EventResponse r = new EventResponse();
         r.setId(eventId);
         r.setOrganiserId(organiserId);
-        r.setVenueId(UUID.randomUUID());
+        r.setVenueId(3L);
         r.setTitle("Test Event");
         r.setCategory(EventCategory.CONCERT);
         r.setStatus(EventStatus.DRAFT);
@@ -65,7 +64,7 @@ class OrganiserEventControllerTest {
         request.setDescription("Desc");
         request.setCategory(EventCategory.CONCERT);
         request.setEventDate(LocalDateTime.now().plusDays(30));
-        request.setVenueId(UUID.randomUUID());
+        request.setVenueId(3L);
 
         mockMvc.perform(post("/api/organiser/events")
                         .header("Authorization", "Bearer fake-token")
@@ -140,7 +139,7 @@ class OrganiserEventControllerTest {
     @Test
     void addTier_returnsCreated() throws Exception {
         TierResponse tier = new TierResponse();
-        tier.setId(UUID.randomUUID());
+        tier.setId(4L);
         tier.setEventId(eventId);
         tier.setName("VIP");
         tier.setPrice(new BigDecimal("500.00"));
@@ -167,7 +166,7 @@ class OrganiserEventControllerTest {
         when(eventService.getOrganiserEventDetail(any(), any()))
                 .thenThrow(new ResourceNotFoundException("Event not found"));
 
-        mockMvc.perform(get("/api/organiser/events/{id}", UUID.randomUUID())
+        mockMvc.perform(get("/api/organiser/events/{id}", 99L)
                         .header("Authorization", "Bearer fake-token"))
                 .andExpect(status().isNotFound());
     }

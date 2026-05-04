@@ -15,7 +15,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -28,7 +27,7 @@ class PublicEventControllerTest {
     @Autowired private MockMvc mockMvc;
     @MockitoBean private EventService eventService;
 
-    private final UUID eventId = UUID.randomUUID();
+    private final Long eventId = 1L;
 
     @Test
     void browseEvents_noFilters_returnsOk() throws Exception {
@@ -86,7 +85,7 @@ class PublicEventControllerTest {
 
     @Test
     void getEventDetail_notFound_returnsNotFound() throws Exception {
-        UUID nonExistent = UUID.randomUUID();
+        Long nonExistent = 99L;
         when(eventService.getEventDetail(nonExistent))
                 .thenThrow(new ResourceNotFoundException("Event not found"));
 

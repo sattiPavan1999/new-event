@@ -6,11 +6,10 @@ import com.eventmanagement.enums.EventStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class EventDetailResponse {
 
-    private UUID id;
+    private Long id;
     private String title;
     private String description;
     private EventCategory category;
@@ -23,7 +22,7 @@ public class EventDetailResponse {
     public EventDetailResponse() {
     }
 
-    public EventDetailResponse(UUID id, String title, String description, EventCategory category,
+    public EventDetailResponse(Long id, String title, String description, EventCategory category,
                                LocalDateTime eventDate, String bannerImageUrl, EventStatus status,
                                VenueDto venue, List<TierResponse> tiers) {
         this.id = id;
@@ -37,11 +36,11 @@ public class EventDetailResponse {
         this.tiers = tiers;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

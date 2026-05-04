@@ -7,6 +7,10 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn(),
 }))
 
+vi.mock('@/contexts/CartContext', () => ({
+  useCart: vi.fn(() => ({ totalCount: 0, items: [], totalAmount: 0 })),
+}))
+
 vi.mock('@/components/logout-dialog/logout-dialog', () => ({
   LogoutDialog: () => null,
 }))

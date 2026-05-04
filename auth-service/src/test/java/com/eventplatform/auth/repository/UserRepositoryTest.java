@@ -10,7 +10,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,7 +23,6 @@ class UserRepositoryTest {
 
     private User saveUser(String email) {
         User user = new User();
-        user.setId(UUID.randomUUID());
         user.setEmail(email);
         user.setPasswordHash("$2a$12$hashed");
         user.setFullName("Test User");
@@ -66,13 +64,17 @@ class UserRepositoryTest {
 
     @Test
     void save_persistsAllFields() {
-        UUID id = UUID.randomUUID();
-        User user = new User(id, "save@example.com", "$2a$12$hash", "Full Name",
-                UserRole.ORGANISER, true, LocalDateTime.now());
+        User user = new User();
+        user.setEmail("save@example.com");
+        user.setPasswordHash("$2a$12$hash");
+        user.setFullName("Full Name");
+        user.setRole(UserRole.ORGANISER);
+        user.setIsActive(true);
+        user.setCreatedAt(LocalDateTime.now());
         user.setWalletBalance(new java.math.BigDecimal("10000.00"));
-        userRepository.save(user);
+        User saved = userRepository.save(user);
 
-        Optional<User> found = userRepository.findById(id);
+        Optional<User> found = userRepository.findById(saved.getId());
         assertTrue(found.isPresent());
         assertEquals("ORGANISER", found.get().getRole().name());
         assertEquals("Full Name", found.get().getFullName());

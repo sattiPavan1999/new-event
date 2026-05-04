@@ -24,7 +24,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -52,19 +51,22 @@ class OrderServiceTest {
 
     @Test
     void createOrder_mockCheckout_returnsConfirmedOrder() {
-        UUID buyerId = UUID.randomUUID();
-        UUID eventId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
+        Long buyerId = 1L;
+        Long eventId = 10L;
+        Long tierId = 100L;
 
         EventServiceResponse event = buildEvent(eventId, tierId);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
-        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.save(any())).thenAnswer(inv -> {
+            Order o = inv.getArgument(0);
+            o.setId(50L);
+            return o;
+        });
         when(walletRepository.debitWallet(eq(buyerId), any())).thenReturn(1);
         when(walletRepository.getBalance(buyerId)).thenReturn(new BigDecimal("7000.00"));
         when(ticketTierRepository.decrementRemainingQty(any(), anyInt())).thenReturn(1);
 
-        CreateOrderRequest request = new CreateOrderRequest(eventId,
-                List.of(new OrderItemRequest(tierId, 2)));
+        CreateOrderRequest request = buildOrderRequest(eventId, tierId, 2);
 
         CreateOrderResponse response = orderService.createOrder(request, buyerId);
 
@@ -79,80 +81,75 @@ class OrderServiceTest {
 
     @Test
     void createOrder_eventNotFound_throwsEventNotFoundException() {
-        UUID eventId = UUID.randomUUID();
+        Long eventId = 10L;
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.empty());
 
-        CreateOrderRequest request = new CreateOrderRequest(eventId,
-                List.of(new OrderItemRequest(UUID.randomUUID(), 1)));
+        CreateOrderRequest request = buildOrderRequest(eventId, 100L, 1);
 
         assertThrows(EventNotFoundException.class,
-                () -> orderService.createOrder(request, UUID.randomUUID()));
+                () -> orderService.createOrder(request, 1L));
     }
 
     @Test
     void createOrder_eventNotPublished_throwsInvalidEventStatusException() {
-        UUID eventId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
+        Long eventId = 10L;
+        Long tierId = 100L;
         EventServiceResponse event = buildEvent(eventId, tierId);
         event.setStatus("DRAFT");
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
 
-        CreateOrderRequest request = new CreateOrderRequest(eventId,
-                List.of(new OrderItemRequest(tierId, 1)));
+        CreateOrderRequest request = buildOrderRequest(eventId, tierId, 1);
 
         assertThrows(InvalidEventStatusException.class,
-                () -> orderService.createOrder(request, UUID.randomUUID()));
+                () -> orderService.createOrder(request, 1L));
     }
 
     @Test
     void createOrder_tierNotInEvent_throwsTierNotFoundException() {
-        UUID eventId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
-        UUID wrongTierId = UUID.randomUUID();
+        Long eventId = 10L;
+        Long tierId = 100L;
+        Long wrongTierId = 999L;
         EventServiceResponse event = buildEvent(eventId, tierId);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
 
-        CreateOrderRequest request = new CreateOrderRequest(eventId,
-                List.of(new OrderItemRequest(wrongTierId, 1)));
+        CreateOrderRequest request = buildOrderRequest(eventId, wrongTierId, 1);
 
         assertThrows(TierNotFoundException.class,
-                () -> orderService.createOrder(request, UUID.randomUUID()));
+                () -> orderService.createOrder(request, 1L));
     }
 
     @Test
     void createOrder_quantityExceedsMax_throwsQuantityExceedsMaxException() {
-        UUID eventId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
+        Long eventId = 10L;
+        Long tierId = 100L;
         EventServiceResponse event = buildEvent(eventId, tierId);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
 
-        CreateOrderRequest request = new CreateOrderRequest(eventId,
-                List.of(new OrderItemRequest(tierId, 10)));
+        CreateOrderRequest request = buildOrderRequest(eventId, tierId, 10);
 
         assertThrows(QuantityExceedsMaxPerOrderException.class,
-                () -> orderService.createOrder(request, UUID.randomUUID()));
+                () -> orderService.createOrder(request, 1L));
     }
 
     @Test
     void createOrder_insufficientInventory_throwsInsufficientInventoryException() {
-        UUID eventId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
+        Long eventId = 10L;
+        Long tierId = 100L;
         EventServiceResponse event = buildEvent(eventId, tierId);
         event.getTiers().get(0).setRemainingQty(2);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
 
-        CreateOrderRequest request = new CreateOrderRequest(eventId,
-                List.of(new OrderItemRequest(tierId, 3)));
+        CreateOrderRequest request = buildOrderRequest(eventId, tierId, 3);
 
         assertThrows(InsufficientInventoryException.class,
-                () -> orderService.createOrder(request, UUID.randomUUID()));
+                () -> orderService.createOrder(request, 1L));
     }
 
     // ── getMyOrders ───────────────────────────────────────────────────────────
 
     @Test
     void getMyOrders_returnsConfirmedOrdersPage() {
-        UUID buyerId = UUID.randomUUID();
+        Long buyerId = 1L;
         Order order = buildOrder(buyerId, OrderStatus.CONFIRMED);
         Page<Order> page = new PageImpl<>(List.of(order));
         when(orderRepository.findByBuyerIdAndStatus(eq(buyerId), eq(OrderStatus.CONFIRMED), any()))
@@ -167,7 +164,7 @@ class OrderServiceTest {
 
     @Test
     void getMyOrders_emptyResult_returnsEmptyPage() {
-        UUID buyerId = UUID.randomUUID();
+        Long buyerId = 1L;
         Page<Order> emptyPage = new PageImpl<>(Collections.emptyList());
         when(orderRepository.findByBuyerIdAndStatus(any(), any(), any())).thenReturn(emptyPage);
 
@@ -178,7 +175,7 @@ class OrderServiceTest {
 
     @Test
     void getMyOrders_invalidPageParams_normalizes() {
-        UUID buyerId = UUID.randomUUID();
+        Long buyerId = 1L;
         Page<Order> emptyPage = new PageImpl<>(Collections.emptyList());
         when(orderRepository.findByBuyerIdAndStatus(any(), any(), any())).thenReturn(emptyPage);
 
@@ -189,7 +186,7 @@ class OrderServiceTest {
 
     @Test
     void getOrderById_ownOrder_returnsDetail() {
-        UUID buyerId = UUID.randomUUID();
+        Long buyerId = 1L;
         Order order = buildOrder(buyerId, OrderStatus.CONFIRMED);
         when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
                 .thenReturn(Optional.of(order));
@@ -202,8 +199,8 @@ class OrderServiceTest {
 
     @Test
     void getOrderById_orderBelongsToOtherBuyer_throwsOrderAccessDeniedException() {
-        UUID orderId = UUID.randomUUID();
-        UUID buyerId = UUID.randomUUID();
+        Long orderId = 50L;
+        Long buyerId = 1L;
         when(orderRepository.findByIdAndBuyerId(orderId, buyerId)).thenReturn(Optional.empty());
         when(orderRepository.existsById(orderId)).thenReturn(true);
 
@@ -213,8 +210,8 @@ class OrderServiceTest {
 
     @Test
     void getOrderById_orderDoesNotExist_throwsOrderNotFoundException() {
-        UUID orderId = UUID.randomUUID();
-        UUID buyerId = UUID.randomUUID();
+        Long orderId = 50L;
+        Long buyerId = 1L;
         when(orderRepository.findByIdAndBuyerId(orderId, buyerId)).thenReturn(Optional.empty());
         when(orderRepository.existsById(orderId)).thenReturn(false);
 
@@ -226,8 +223,8 @@ class OrderServiceTest {
 
     @Test
     void cancelOrder_confirmedOrder_returnsCancelled() {
-        UUID buyerId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
+        Long buyerId = 1L;
+        Long tierId = 100L;
         Order order = buildOrderWithItem(buyerId, OrderStatus.CONFIRMED, tierId,
                 Instant.now().plus(2, ChronoUnit.DAYS));
 
@@ -249,8 +246,8 @@ class OrderServiceTest {
 
     @Test
     void cancelOrder_pendingOrder_throwsCancellationNotAllowed() {
-        UUID buyerId = UUID.randomUUID();
-        Order order = buildOrderWithItem(buyerId, OrderStatus.PENDING, UUID.randomUUID(),
+        Long buyerId = 1L;
+        Order order = buildOrderWithItem(buyerId, OrderStatus.PENDING, 100L,
                 Instant.now().plus(2, ChronoUnit.DAYS));
 
         when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
@@ -262,8 +259,8 @@ class OrderServiceTest {
 
     @Test
     void cancelOrder_eventTooSoon_throwsCancellationNotAllowed() {
-        UUID buyerId = UUID.randomUUID();
-        Order order = buildOrderWithItem(buyerId, OrderStatus.CONFIRMED, UUID.randomUUID(),
+        Long buyerId = 1L;
+        Order order = buildOrderWithItem(buyerId, OrderStatus.CONFIRMED, 100L,
                 Instant.now().plus(12, ChronoUnit.HOURS));
 
         when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
@@ -275,8 +272,8 @@ class OrderServiceTest {
 
     @Test
     void cancelOrder_notOwner_throwsOrderNotFoundException() {
-        UUID orderId = UUID.randomUUID();
-        UUID buyerId = UUID.randomUUID();
+        Long orderId = 50L;
+        Long buyerId = 1L;
         when(orderRepository.findByIdAndBuyerId(orderId, buyerId)).thenReturn(Optional.empty());
         when(orderRepository.existsById(orderId)).thenReturn(false);
 
@@ -286,17 +283,20 @@ class OrderServiceTest {
 
     @Test
     void createOrder_insufficientBalance_throwsInsufficientWalletBalanceException() {
-        UUID buyerId = UUID.randomUUID();
-        UUID eventId = UUID.randomUUID();
-        UUID tierId = UUID.randomUUID();
+        Long buyerId = 1L;
+        Long eventId = 10L;
+        Long tierId = 100L;
 
         EventServiceResponse event = buildEvent(eventId, tierId);
         when(eventServiceClient.getEvent(eventId)).thenReturn(Optional.of(event));
-        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(orderRepository.save(any())).thenAnswer(inv -> {
+            Order o = inv.getArgument(0);
+            o.setId(50L);
+            return o;
+        });
         when(walletRepository.debitWallet(eq(buyerId), any())).thenReturn(0);
 
-        CreateOrderRequest request = new CreateOrderRequest(eventId,
-                List.of(new OrderItemRequest(tierId, 2)));
+        CreateOrderRequest request = buildOrderRequest(eventId, tierId, 2);
 
         assertThrows(InsufficientWalletBalanceException.class,
                 () -> orderService.createOrder(request, buyerId));
@@ -304,7 +304,17 @@ class OrderServiceTest {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private EventServiceResponse buildEvent(UUID eventId, UUID tierId) {
+    private CreateOrderRequest buildOrderRequest(Long eventId, Long tierId, int qty) {
+        OrderItemRequest item = new OrderItemRequest();
+        item.setTierId(tierId);
+        item.setQuantity(qty);
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setEventId(eventId);
+        request.setItems(List.of(item));
+        return request;
+    }
+
+    private EventServiceResponse buildEvent(Long eventId, Long tierId) {
         EventServiceResponse.TierResponse tier = new EventServiceResponse.TierResponse();
         tier.setId(tierId);
         tier.setName("General");
@@ -323,9 +333,9 @@ class OrderServiceTest {
         return event;
     }
 
-    private Order buildOrder(UUID buyerId, OrderStatus status) {
+    private Order buildOrder(Long buyerId, OrderStatus status) {
         Order order = new Order();
-        order.setId(UUID.randomUUID());
+        order.setId(1L);
         order.setBuyerId(buyerId);
         order.setStatus(status);
         order.setTotalAmount(new BigDecimal("3000.00"));
@@ -334,10 +344,10 @@ class OrderServiceTest {
         return order;
     }
 
-    private Order buildOrderWithItem(UUID buyerId, OrderStatus status, UUID tierId, Instant eventDate) {
+    private Order buildOrderWithItem(Long buyerId, OrderStatus status, Long tierId, Instant eventDate) {
         Order order = buildOrder(buyerId, status);
         OrderItem item = new OrderItem();
-        item.setId(UUID.randomUUID());
+        item.setId(10L);
         item.setOrder(order);
         item.setTierId(tierId);
         item.setTierName("General");

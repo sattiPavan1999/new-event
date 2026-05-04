@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import LoginView from './views/login';
 import BuyerRegistrationView from './views/buyer-registration';
 import OrganiserRegistrationView from './views/organiser-registration';
@@ -12,6 +13,7 @@ import { OrganiserEventDetailView } from './views/organiser-event-detail';
 import { OrganiserEventCreateView } from './views/organiser-event-create';
 import { OrderConfirmationView } from './views/order-confirmation';
 import { MyBookingsView } from './views/my-bookings';
+import { CartView } from './views/cart';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -73,9 +75,19 @@ function AppRoutes() {
       <Route path="/events" element={<EventListingView />} />
       <Route path="/events/:eventId" element={<EventDetailView />} />
 
+      {/* Cart — requires BUYER login */}
+      <Route
+        path="/cart"
+        element={
+          <ProtectedRoute allowedRoles={['BUYER']}>
+            <CartView />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Order confirmation — requires BUYER login */}
       <Route
-        path="/orders/:orderId"
+        path="/orders/confirmation"
         element={
           <ProtectedRoute allowedRoles={['BUYER']}>
             <OrderConfirmationView />
@@ -138,9 +150,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <CartProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

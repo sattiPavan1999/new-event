@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -24,12 +23,12 @@ public class JwtUtil {
         this.accessTokenExpiry = accessTokenExpiry;
     }
 
-    public String generateAccessToken(UUID userId, String email, String role) {
+    public String generateAccessToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessTokenExpiry);
 
         return Jwts.builder()
-                .subject(userId.toString())
+                .subject(String.valueOf(userId))
                 .claim("email", email)
                 .claim("role", role)
                 .claim("type", "access")

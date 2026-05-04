@@ -2,11 +2,10 @@ package com.eventplatform.auth.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class UserDto {
 
-    private UUID id;
+    private Long id;
     private String email;
     private String fullName;
     private String role;
@@ -17,20 +16,11 @@ public class UserDto {
     public UserDto() {
     }
 
-    public UserDto(UUID id, String email, String fullName, String role, Boolean isActive, LocalDateTime createdAt) {
-        this.id = id;
-        this.email = email;
-        this.fullName = fullName;
-        this.role = role;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

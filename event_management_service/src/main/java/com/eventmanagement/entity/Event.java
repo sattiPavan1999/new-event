@@ -2,33 +2,23 @@ package com.eventmanagement.entity;
 
 import com.eventmanagement.enums.EventCategory;
 import com.eventmanagement.enums.EventStatus;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "events", schema = "events")
 public class Event {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private UUID id;
+    private Long id;
 
     @Column(name = "organiser_id", nullable = false)
-    private UUID organiserId;
+    private Long organiserId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "venue_id", nullable = false)
@@ -66,10 +56,9 @@ public class Event {
     public Event() {
     }
 
-    public Event(UUID id, UUID organiserId, Venue venue, String title, String description,
+    public Event(Long organiserId, Venue venue, String title, String description,
                  EventCategory category, LocalDateTime eventDate, String bannerImageUrl,
                  EventStatus status, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
         this.organiserId = organiserId;
         this.venue = venue;
         this.title = title;
@@ -82,19 +71,19 @@ public class Event {
         this.updatedAt = updatedAt;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public UUID getOrganiserId() {
+    public Long getOrganiserId() {
         return organiserId;
     }
 
-    public void setOrganiserId(UUID organiserId) {
+    public void setOrganiserId(Long organiserId) {
         this.organiserId = organiserId;
     }
 

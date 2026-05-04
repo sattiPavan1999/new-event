@@ -3,8 +3,6 @@ package com.ticketing.orderservice.repository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
-
 @Repository
 public class TicketTierRepository {
 
@@ -14,7 +12,7 @@ public class TicketTierRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public int decrementRemainingQty(UUID tierId, Integer quantity) {
+    public int decrementRemainingQty(Long tierId, Integer quantity) {
         String sql = "UPDATE events.ticket_tiers " +
                      "SET remaining_qty = remaining_qty - ? " +
                      "WHERE id = ? AND remaining_qty >= ?";
@@ -22,7 +20,7 @@ public class TicketTierRepository {
         return jdbcTemplate.update(sql, quantity, tierId, quantity);
     }
 
-    public int incrementRemainingQty(UUID tierId, Integer quantity) {
+    public int incrementRemainingQty(Long tierId, Integer quantity) {
         String sql = "UPDATE events.ticket_tiers SET remaining_qty = remaining_qty + ? WHERE id = ?";
         return jdbcTemplate.update(sql, quantity, tierId);
     }

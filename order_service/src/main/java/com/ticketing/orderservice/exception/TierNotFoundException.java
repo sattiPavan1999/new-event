@@ -1,17 +1,15 @@
 package com.ticketing.orderservice.exception;
 
-import java.util.UUID;
-
 public class TierNotFoundException extends RuntimeException {
 
-    private final UUID tierId;
+    private final Long tierId;
 
-    public TierNotFoundException(UUID tierId) {
+    public TierNotFoundException(Long tierId) {
         super("Ticket tier not found with id: " + tierId);
         this.tierId = tierId;
     }
 
-    public UUID getTierId() {
+    public Long getTierId() {
         return tierId;
     }
 }

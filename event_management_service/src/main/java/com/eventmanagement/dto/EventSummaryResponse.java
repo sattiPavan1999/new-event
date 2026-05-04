@@ -4,11 +4,10 @@ import com.eventmanagement.enums.EventCategory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 public class EventSummaryResponse {
 
-    private UUID id;
+    private Long id;
     private String title;
     private EventCategory category;
     private LocalDateTime eventDate;
@@ -20,7 +19,7 @@ public class EventSummaryResponse {
     public EventSummaryResponse() {
     }
 
-    public EventSummaryResponse(UUID id, String title, EventCategory category, LocalDateTime eventDate,
+    public EventSummaryResponse(Long id, String title, EventCategory category, LocalDateTime eventDate,
                                 String city, BigDecimal lowestPrice, String bannerImageUrl, String venueName) {
         this.id = id;
         this.title = title;
@@ -32,11 +31,11 @@ public class EventSummaryResponse {
         this.venueName = venueName;
     }
 
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

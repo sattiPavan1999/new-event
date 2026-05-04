@@ -5,8 +5,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class JwtUtilTest {
@@ -22,7 +20,7 @@ class JwtUtilTest {
 
     @Test
     void testGenerateAccessToken() {
-        UUID userId = UUID.randomUUID();
+        Long userId = 42L;
         String email = "test@example.com";
         String role = "BUYER";
 
@@ -35,7 +33,7 @@ class JwtUtilTest {
 
     @Test
     void testValidateAccessToken() {
-        UUID userId = UUID.randomUUID();
+        Long userId = 42L;
         String email = "test@example.com";
         String role = "BUYER";
 
@@ -43,7 +41,7 @@ class JwtUtilTest {
         Claims claims = jwtUtil.validateToken(token);
 
         assertNotNull(claims);
-        assertEquals(userId.toString(), claims.getSubject());
+        assertEquals(String.valueOf(userId), claims.getSubject());
         assertEquals(email, claims.get("email"));
         assertEquals(role, claims.get("role"));
         assertEquals("access", claims.get("type"));
@@ -52,7 +50,7 @@ class JwtUtilTest {
     @Test
     void testAccessTokenExpiry() throws InterruptedException {
         JwtUtil shortExpiryUtil = new JwtUtil(secret, 100L);
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         String token = shortExpiryUtil.generateAccessToken(userId, "test@example.com", "BUYER");
 
         Thread.sleep(150);
@@ -68,14 +66,14 @@ class JwtUtilTest {
 
     @Test
     void testAccessTokenContainsClaims() {
-        UUID userId = UUID.randomUUID();
+        Long userId = 99L;
         String email = "buyer@example.com";
         String role = "ORGANISER";
 
         String token = jwtUtil.generateAccessToken(userId, email, role);
         Claims claims = jwtUtil.validateToken(token);
 
-        assertEquals(userId.toString(), claims.getSubject());
+        assertEquals(String.valueOf(userId), claims.getSubject());
         assertEquals(email, claims.get("email"));
         assertEquals(role, claims.get("role"));
         assertNotNull(claims.getIssuedAt());

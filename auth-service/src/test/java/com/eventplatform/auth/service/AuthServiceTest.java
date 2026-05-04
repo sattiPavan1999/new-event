@@ -15,7 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -42,7 +41,11 @@ class AuthServiceTest {
     void register_success_returnTokenAndUser() {
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(jwtUtil.generateAccessToken(any(), any(), any())).thenReturn("access-token");
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.save(any())).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(1L);
+            return u;
+        });
 
         AuthResponse response = authService.register(
                 new RegisterRequest("new@example.com", "New User", "Password123", "BUYER"));
@@ -114,7 +117,7 @@ class AuthServiceTest {
 
     private User buildUser(String email, String passwordHash, UserRole role) {
         User user = new User();
-        user.setId(UUID.randomUUID());
+        user.setId(1L);
         user.setEmail(email);
         user.setPasswordHash(passwordHash);
         user.setFullName("Test User");

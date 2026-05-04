@@ -3,22 +3,22 @@ package com.ticketing.orderservice.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "order_items", schema = "orders")
 public class OrderItem {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private UUID id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @Column(name = "tier_id", nullable = false)
-    private UUID tierId;
+    private Long tierId;
 
     @Column(name = "tier_name", nullable = false, length = 100)
     private String tierName;
@@ -44,23 +44,11 @@ public class OrderItem {
     public OrderItem() {
     }
 
-    public OrderItem(UUID id, Order order, UUID tierId, String tierName, String eventTitle, Instant eventDate, Integer quantity, BigDecimal unitPrice, Instant createdAt) {
-        this.id = id;
-        this.order = order;
-        this.tierId = tierId;
-        this.tierName = tierName;
-        this.eventTitle = eventTitle;
-        this.eventDate = eventDate;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -72,11 +60,11 @@ public class OrderItem {
         this.order = order;
     }
 
-    public UUID getTierId() {
+    public Long getTierId() {
         return tierId;
     }
 
-    public void setTierId(UUID tierId) {
+    public void setTierId(Long tierId) {
         this.tierId = tierId;
     }
 

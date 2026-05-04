@@ -1,29 +1,29 @@
 export interface OrderItemRequest {
-  tierId: string;
+  tierId: number;
   quantity: number;
 }
 
 export interface CreateOrderRequest {
-  eventId: string;
+  eventId: number;
   items: OrderItemRequest[];
 }
 
 export interface OrderItemResponse {
-  tierId: string;
+  tierId: number;
   quantity: number;
   price: number;
 }
 
 export interface CreateOrderResponse {
-  orderId: string;
+  orderId: number;
   status: string;
   totalAmount: number;
   items: OrderItemResponse[];
   remainingBalance?: number;
 }
 
-export interface OrderConfirmationState {
-  orderId: string;
+export interface ConfirmedOrder {
+  orderId: number;
   status: string;
   eventTitle: string;
   totalAmount: number;
@@ -34,8 +34,13 @@ export interface OrderConfirmationState {
   }>;
 }
 
+export interface OrderConfirmationState {
+  orders: ConfirmedOrder[];
+  grandTotal: number;
+}
+
 export interface OrderItemSummary {
-  orderItemId: string;
+  orderItemId: number;
   tierName: string;
   eventTitle: string;
   eventDate: string;
@@ -45,7 +50,7 @@ export interface OrderItemSummary {
 }
 
 export interface OrderSummary {
-  orderId: string;
+  orderId: number;
   status: string;
   totalAmount: number;
   createdAt: string;
@@ -61,7 +66,7 @@ export interface OrderHistoryResponse {
 }
 
 export interface CancelOrderResponse {
-  orderId: string;
+  orderId: number;
   status: string;
   message: string;
   remainingBalance?: number;

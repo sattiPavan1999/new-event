@@ -32,7 +32,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,15 +54,13 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponse createEvent(CreateEventRequest request, UUID organiserId) {
+    public EventResponse createEvent(CreateEventRequest request, Long organiserId) {
         Venue venue = venueRepository.findById(request.getVenueId())
                 .orElseThrow(() -> new ResourceNotFoundException("Venue not found with id: " + request.getVenueId()));
 
-        UUID eventId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
 
         Event event = new Event(
-                eventId,
                 organiserId,
                 venue,
                 request.getTitle(),
@@ -77,13 +74,13 @@ public class EventService {
         );
 
         Event savedEvent = eventRepository.save(event);
-        auditService.logEventCreated(eventId, organiserId, request.getTitle());
+        auditService.logEventCreated(savedEvent.getId(), organiserId, request.getTitle());
 
         return toEventResponse(savedEvent);
     }
 
     @Transactional
-    public TierResponse addTier(UUID eventId, CreateTierRequest request, UUID organiserId) {
+    public TierResponse addTier(Long eventId, CreateTierRequest request, Long organiserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -100,11 +97,9 @@ public class EventService {
             }
         }
 
-        UUID tierId = UUID.randomUUID();
         Integer maxPerOrder = request.getMaxPerOrder() != null ? request.getMaxPerOrder() : 10;
 
         TicketTier tier = new TicketTier(
-                tierId,
                 event,
                 request.getName(),
                 request.getDescription(),
@@ -119,13 +114,13 @@ public class EventService {
         );
 
         TicketTier savedTier = ticketTierRepository.save(tier);
-        auditService.logTierCreated(tierId, eventId, request.getName());
+        auditService.logTierCreated(savedTier.getId(), eventId, request.getName());
 
         return toTierResponse(savedTier);
     }
 
     @Transactional
-    public TierResponse updateTier(UUID eventId, UUID tierId, CreateTierRequest request, UUID organiserId) {
+    public TierResponse updateTier(Long eventId, Long tierId, CreateTierRequest request, Long organiserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -176,7 +171,7 @@ public class EventService {
     }
 
     @Transactional
-    public void deleteTier(UUID eventId, UUID tierId, UUID organiserId) {
+    public void deleteTier(Long eventId, Long tierId, Long organiserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -199,7 +194,7 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponse updateEvent(UUID eventId, CreateEventRequest request, UUID organiserId) {
+    public EventResponse updateEvent(Long eventId, CreateEventRequest request, Long organiserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -234,7 +229,7 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponse publishEvent(UUID eventId, UUID organiserId) {
+    public EventResponse publishEvent(Long eventId, Long organiserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -259,7 +254,7 @@ public class EventService {
     }
 
     @Transactional
-    public EventResponse cancelEvent(UUID eventId, UUID organiserId) {
+    public EventResponse cancelEvent(Long eventId, Long organiserId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -287,14 +282,14 @@ public class EventService {
                 pageable
         );
 
-        List<UUID> eventIds = eventPage.getContent().stream()
+        List<Long> eventIds = eventPage.getContent().stream()
                 .map(Event::getId)
                 .collect(Collectors.toList());
 
-        Map<UUID, BigDecimal> minPrices = eventIds.isEmpty() ? Collections.emptyMap() :
+        Map<Long, BigDecimal> minPrices = eventIds.isEmpty() ? Collections.emptyMap() :
                 ticketTierRepository.findMinActivePricesByEventIds(eventIds, TierStatus.ACTIVE)
                         .stream()
-                        .collect(Collectors.toMap(row -> (UUID) row[0], row -> (BigDecimal) row[1]));
+                        .collect(Collectors.toMap(row -> (Long) row[0], row -> (BigDecimal) row[1]));
 
         List<EventSummaryResponse> content = eventPage.getContent().stream()
                 .map(e -> toEventSummaryResponse(e, minPrices.getOrDefault(e.getId(), BigDecimal.ZERO)))
@@ -317,7 +312,7 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public EventDetailResponse getEventDetail(UUID eventId) {
+    public EventDetailResponse getEventDetail(Long eventId) {
         Event event = eventRepository.findWithDetailsById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -331,7 +326,7 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public SalesSummaryResponse getSalesSummary(UUID eventId, UUID organiserId) {
+    public SalesSummaryResponse getSalesSummary(Long eventId, Long organiserId) {
         Event event = eventRepository.findWithDetailsById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
@@ -371,15 +366,15 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<EventDetailResponse> getOrganizerEvents(UUID organiserId, int page, int size) {
+    public PageResponse<EventDetailResponse> getOrganizerEvents(Long organiserId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Event> eventPage = eventRepository.findByOrganiserIdOrderByCreatedAtDesc(organiserId, pageable);
 
-        List<UUID> eventIds = eventPage.getContent().stream()
+        List<Long> eventIds = eventPage.getContent().stream()
                 .map(Event::getId)
                 .collect(Collectors.toList());
         if (!eventIds.isEmpty()) {
-            Map<UUID, List<TicketTier>> tiersByEvent = ticketTierRepository.findByEventIdIn(eventIds)
+            Map<Long, List<TicketTier>> tiersByEvent = ticketTierRepository.findByEventIdIn(eventIds)
                     .stream()
                     .collect(Collectors.groupingBy(t -> t.getEvent().getId()));
             eventPage.getContent().forEach(e ->
@@ -394,14 +389,14 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
-    public EventDetailResponse getOrganiserEventDetail(UUID eventId, UUID organiserId) {
+    public EventDetailResponse getOrganiserEventDetail(Long eventId, Long organiserId) {
         Event event = eventRepository.findWithDetailsById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
         validateEventOwnership(event, organiserId);
         return toEventDetailResponse(event);
     }
 
-    private void validateEventOwnership(Event event, UUID organiserId) {
+    private void validateEventOwnership(Event event, Long organiserId) {
         if (!event.getOrganiserId().equals(organiserId)) {
             throw new BusinessRuleViolationException("You do not have permission to modify this event");
         }

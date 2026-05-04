@@ -1,17 +1,15 @@
 package com.ticketing.orderservice.exception;
 
-import java.util.UUID;
-
 public class OrderAccessDeniedException extends RuntimeException {
 
-    private final UUID orderId;
+    private final Long orderId;
 
-    public OrderAccessDeniedException(UUID orderId) {
+    public OrderAccessDeniedException(Long orderId) {
         super("Access denied to order with id: " + orderId);
         this.orderId = orderId;
     }
 
-    public UUID getOrderId() {
+    public Long getOrderId() {
         return orderId;
     }
 }

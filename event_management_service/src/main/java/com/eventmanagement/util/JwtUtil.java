@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -21,7 +20,7 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public UUID extractOrganiserId(String authHeader) {
+    public Long extractOrganiserId(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new UnauthorizedException("Missing or invalid Authorization header");
         }
@@ -36,7 +35,7 @@ public class JwtUtil {
             if (!"ORGANISER".equals(role)) {
                 throw new UnauthorizedException("Access denied: ORGANISER role required");
             }
-            return UUID.fromString(claims.getSubject());
+            return Long.parseLong(claims.getSubject());
         } catch (JwtException e) {
             throw new UnauthorizedException("Invalid or expired token");
         }

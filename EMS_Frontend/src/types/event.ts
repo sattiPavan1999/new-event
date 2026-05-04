@@ -24,7 +24,7 @@ export const TicketTierStatus = {
 export type TicketTierStatus = (typeof TicketTierStatus)[keyof typeof TicketTierStatus];
 
 export interface Venue {
-  id: string;
+  id: number;
   name: string;
   address?: string;
   city: string;
@@ -33,8 +33,8 @@ export interface Venue {
 }
 
 export interface TicketTier {
-  id: string;
-  eventId: string;
+  id: number;
+  eventId: number;
   name: string;
   description?: string;
   price: number;
@@ -50,15 +50,15 @@ export interface TicketTier {
 }
 
 export interface Event {
-  id: string;
+  id: number;
   title: string;
   description?: string;
   category: EventCategory;
   eventDate: string;
   status: EventStatus;
   bannerImageUrl?: string;
-  organiserId?: string;
-  venueId?: string;
+  organiserId?: number;
+  venueId?: number;
   venueName?: string;
   venue: Venue;
   tiers?: TicketTier[];
@@ -66,7 +66,7 @@ export interface Event {
 }
 
 export interface EventSummary {
-  id: string;
+  id: number;
   title: string;
   category: EventCategory;
   eventDate: string;
@@ -90,7 +90,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface OrganiserEvent {
-  id: string;
+  id: number;
   title: string;
   description?: string;
   category: EventCategory;
@@ -102,7 +102,7 @@ export interface OrganiserEvent {
 }
 
 export interface SalesSummaryTier {
-  tierId: string;
+  tierId: number;
   tierName: string;
   totalQty: number;
   remainingQty: number;
@@ -111,7 +111,7 @@ export interface SalesSummaryTier {
 }
 
 export interface SalesSummary {
-  eventId: string;
+  eventId: number;
   eventTitle: string;
   totalOrders: number;
   totalRevenue: number;
@@ -130,7 +130,7 @@ export interface CreateEventRequest {
   description?: string;
   category: EventCategory;
   eventDate: string;
-  venueId: string;
+  venueId: number;
   bannerImageUrl?: string;
 }
 
@@ -139,7 +139,7 @@ export interface UpdateEventRequest {
   description?: string;
   category: EventCategory;
   eventDate?: string;
-  venueId?: string;
+  venueId?: number;
   bannerImageUrl?: string;
 }
 

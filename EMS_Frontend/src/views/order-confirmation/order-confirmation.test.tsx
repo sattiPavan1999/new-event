@@ -26,13 +26,16 @@ function renderWithState(state: OrderConfirmationState | null) {
 }
 
 const validState: OrderConfirmationState = {
-  orderId: 'order-abc-123',
-  status: 'CONFIRMED',
-  eventTitle: 'Rock Concert 2026',
-  totalAmount: 5000,
-  items: [
-    { tierName: 'VIP', quantity: 2, unitPrice: 2500 },
+  orders: [
+    {
+      orderId: 123,
+      status: 'CONFIRMED',
+      eventTitle: 'Rock Concert 2026',
+      totalAmount: 5000,
+      items: [{ tierName: 'VIP', quantity: 2, unitPrice: 2500 }],
+    },
   ],
+  grandTotal: 5000,
 }
 
 describe('OrderConfirmationView', () => {
@@ -59,5 +62,10 @@ describe('OrderConfirmationView', () => {
   it('displays ticket tier and quantity', () => {
     renderWithState(validState)
     expect(screen.getByText(/VIP × 2/)).toBeInTheDocument()
+  })
+
+  it('displays reference ID', () => {
+    renderWithState(validState)
+    expect(screen.getByText(/Ref #123/)).toBeInTheDocument()
   })
 })
