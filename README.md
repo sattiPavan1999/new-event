@@ -21,7 +21,7 @@ A full-stack event ticketing platform. Buyers can browse events and purchase tic
 
 | Service | Port | Responsibility |
 |---|---|---|
-| Auth Service | 8080 | Registration, login, JWT issuance |
+| Auth Service | 8080 | Registration, login, session validation, JWT issuance |
 | Event Management Service | 8081 | Event CRUD, ticket tiers, public browsing |
 | Order Service | 8082 | Order creation, order history, cancellation |
 | Frontend (dev) | 5173 | React SPA |
@@ -146,8 +146,8 @@ The Vite dev server proxies API calls to the running backend services automatica
 
 ```bash
 cd EMS_Frontend
-npm run test -- --run          # single run, all tests
-npm run test                   # watch mode
+npm run test                             # single run, all tests
+npm run test -- src/path/to/file.test.tsx  # single test file
 ```
 
 ### Backend (each service)
@@ -173,6 +173,8 @@ Copy `.env.example` to `.env` at the project root before running `docker-compose
 | `DATABASE_PASSWORD` | `postgres` | PostgreSQL password |
 | `JWT_ACCESS_EXPIRY` | `86400000` | Access token lifetime in ms (24 hours) |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Allowed CORS origins |
+| `MOCK_PAYMENT_CHECKOUT` | `true` | Confirms orders immediately without a payment provider |
+| `COOKIE_SECURE` | `false` | Set `true` when serving over HTTPS (adds `Secure` flag to auth cookie) |
 
 > Each service also has its own `.env.example` for running outside Docker. Variable names match the table above.
 
@@ -195,8 +197,10 @@ All API calls from the frontend go through Vite's dev proxy (configured in `EMS_
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/api/auth/register` | Register as BUYER or ORGANISER |
-| POST | `/api/auth/login` | Login, receive JWT |
+| POST | `/api/auth/register` | Register as BUYER or ORGANISER; sets httpOnly `accessToken` cookie |
+| POST | `/api/auth/login` | Login; sets httpOnly `accessToken` cookie |
+| GET | `/api/auth/me` | Return current user from cookie (used for session restore on page load) |
+| POST | `/api/auth/logout` | Clear the auth cookie |
 
 **Events (public)**
 
