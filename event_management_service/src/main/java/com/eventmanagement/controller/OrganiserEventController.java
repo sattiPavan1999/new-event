@@ -12,6 +12,7 @@ import com.eventmanagement.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,10 +39,11 @@ public class OrganiserEventController {
 
     @GetMapping
     public ResponseEntity<PageResponse<EventDetailResponse>> getOrganizerEvents(
-            @RequestHeader("Authorization") String authHeader,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         PageResponse<EventDetailResponse> response = eventService.getOrganizerEvents(organiserId, page, size);
         return ResponseEntity.ok(response);
     }
@@ -49,8 +51,9 @@ public class OrganiserEventController {
     @GetMapping("/{id}")
     public ResponseEntity<EventDetailResponse> getOrganiserEvent(
             @PathVariable("id") Long eventId,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         EventDetailResponse response = eventService.getOrganiserEventDetail(eventId, organiserId);
         return ResponseEntity.ok(response);
     }
@@ -58,8 +61,9 @@ public class OrganiserEventController {
     @PostMapping
     public ResponseEntity<EventResponse> createEvent(
             @Valid @RequestBody CreateEventRequest request,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         EventResponse response = eventService.createEvent(request, organiserId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -68,8 +72,9 @@ public class OrganiserEventController {
     public ResponseEntity<TierResponse> addTier(
             @PathVariable("id") Long eventId,
             @Valid @RequestBody CreateTierRequest request,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         TierResponse response = eventService.addTier(eventId, request, organiserId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -79,8 +84,9 @@ public class OrganiserEventController {
             @PathVariable("id") Long eventId,
             @PathVariable("tierId") Long tierId,
             @Valid @RequestBody CreateTierRequest request,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         TierResponse response = eventService.updateTier(eventId, tierId, request, organiserId);
         return ResponseEntity.ok(response);
     }
@@ -89,8 +95,9 @@ public class OrganiserEventController {
     public ResponseEntity<Void> deleteTier(
             @PathVariable("id") Long eventId,
             @PathVariable("tierId") Long tierId,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         eventService.deleteTier(eventId, tierId, organiserId);
         return ResponseEntity.noContent().build();
     }
@@ -99,8 +106,9 @@ public class OrganiserEventController {
     public ResponseEntity<EventResponse> updateEvent(
             @PathVariable("id") Long eventId,
             @Valid @RequestBody CreateEventRequest request,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         EventResponse response = eventService.updateEvent(eventId, request, organiserId);
         return ResponseEntity.ok(response);
     }
@@ -108,8 +116,9 @@ public class OrganiserEventController {
     @PatchMapping("/{id}/publish")
     public ResponseEntity<EventResponse> publishEvent(
             @PathVariable("id") Long eventId,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         EventResponse response = eventService.publishEvent(eventId, organiserId);
         return ResponseEntity.ok(response);
     }
@@ -117,8 +126,9 @@ public class OrganiserEventController {
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<EventResponse> cancelEvent(
             @PathVariable("id") Long eventId,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         EventResponse response = eventService.cancelEvent(eventId, organiserId);
         return ResponseEntity.ok(response);
     }
@@ -126,8 +136,9 @@ public class OrganiserEventController {
     @GetMapping("/{id}/summary")
     public ResponseEntity<SalesSummaryResponse> getSalesSummary(
             @PathVariable("id") Long eventId,
-            @RequestHeader("Authorization") String authHeader) {
-        Long organiserId = jwtUtil.extractOrganiserId(authHeader);
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(value = "accessToken", required = false) String cookieToken) {
+        Long organiserId = jwtUtil.extractOrganiserId(authHeader, cookieToken);
         SalesSummaryResponse response = eventService.getSalesSummary(eventId, organiserId);
         return ResponseEntity.ok(response);
     }

@@ -15,32 +15,16 @@ import type {
 const eventApi = axios.create({
   baseURL: "",
   timeout: 30000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-let _accessToken: string | null = null;
-
-export const setEventApiToken = (token: string | null) => {
-  _accessToken = token;
-};
-
-eventApi.interceptors.request.use(
-  (config) => {
-    if (_accessToken) {
-      config.headers.Authorization = `Bearer ${_accessToken}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
 eventApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      setEventApiToken(null);
       window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -78,16 +62,12 @@ export const eventService = {
   },
 
   cancelEvent: async (eventId: number): Promise<OrganiserEvent> => {
-    const response = await eventApi.patch(
-      `/api/organiser/events/${eventId}/cancel`,
-    );
+    const response = await eventApi.patch(`/api/organiser/events/${eventId}/cancel`);
     return response.data;
   },
 
   publishEvent: async (eventId: number): Promise<OrganiserEvent> => {
-    const response = await eventApi.patch(
-      `/api/organiser/events/${eventId}/publish`,
-    );
+    const response = await eventApi.patch(`/api/organiser/events/${eventId}/publish`);
     return response.data;
   },
 
@@ -101,10 +81,7 @@ export const eventService = {
     eventId: number,
     data: CreateTierRequest,
   ): Promise<TicketTier> => {
-    const response = await eventApi.post(
-      `/api/organiser/events/${eventId}/tiers`,
-      data,
-    );
+    const response = await eventApi.post(`/api/organiser/events/${eventId}/tiers`, data);
     return response.data;
   },
 

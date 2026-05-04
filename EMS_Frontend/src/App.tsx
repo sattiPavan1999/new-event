@@ -148,15 +148,15 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <BrowserRouter>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <CartProvider>
             <AppRoutes />
-          </BrowserRouter>
-        </CartProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+          </CartProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
 }
 

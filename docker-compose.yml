@@ -79,7 +79,7 @@ services:
       dockerfile: Dockerfile
     container_name: order-service
     environment:
-      MOCK_PAYMENT_CHECKOUT: "true"
+      MOCK_PAYMENT_CHECKOUT: ${MOCK_PAYMENT_CHECKOUT:-true}
       SERVER_PORT: 8080
       DATABASE_URL: jdbc:postgresql://postgres:5432/eventplatform
       DATABASE_USERNAME: ${DATABASE_USERNAME:-postgres}

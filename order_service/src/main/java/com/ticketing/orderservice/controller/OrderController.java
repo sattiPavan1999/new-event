@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -27,9 +30,10 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<CreateOrderResponse> createOrder(
             @Valid @RequestBody CreateOrderRequest request,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            HttpServletRequest httpRequest) {
 
-        String token = extractToken(authorizationHeader);
+        String token = resolveToken(authorizationHeader, httpRequest);
         jwtUtil.validateBuyerRole(token);
         Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
@@ -41,9 +45,10 @@ public class OrderController {
     public ResponseEntity<OrderHistoryResponse> getMyOrders(
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            HttpServletRequest httpRequest) {
 
-        String token = extractToken(authorizationHeader);
+        String token = resolveToken(authorizationHeader, httpRequest);
         jwtUtil.validateBuyerRole(token);
         Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
@@ -54,9 +59,10 @@ public class OrderController {
     @GetMapping("/{id}")
     public ResponseEntity<OrderDetailResponse> getOrderById(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            HttpServletRequest httpRequest) {
 
-        String token = extractToken(authorizationHeader);
+        String token = resolveToken(authorizationHeader, httpRequest);
         jwtUtil.validateBuyerRole(token);
         Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
@@ -67,9 +73,10 @@ public class OrderController {
     @PostMapping("/{id}/cancel")
     public ResponseEntity<CancelOrderResponse> cancelOrder(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String authorizationHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            HttpServletRequest httpRequest) {
 
-        String token = extractToken(authorizationHeader);
+        String token = resolveToken(authorizationHeader, httpRequest);
         jwtUtil.validateBuyerRole(token);
         Long buyerId = jwtUtil.getBuyerIdFromToken(token);
 
@@ -77,10 +84,17 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    private String extractToken(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new com.ticketing.orderservice.exception.UnauthorizedException("Missing or invalid Authorization header");
+    private String resolveToken(String authorizationHeader, HttpServletRequest request) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.substring(7);
         }
-        return authorizationHeader.substring(7);
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        throw new com.ticketing.orderservice.exception.UnauthorizedException("Authentication required");
     }
 }

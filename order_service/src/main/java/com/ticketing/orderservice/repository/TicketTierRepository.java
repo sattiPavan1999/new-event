@@ -21,7 +21,9 @@ public class TicketTierRepository {
     }
 
     public int incrementRemainingQty(Long tierId, Integer quantity) {
-        String sql = "UPDATE events.ticket_tiers SET remaining_qty = remaining_qty + ? WHERE id = ?";
-        return jdbcTemplate.update(sql, quantity, tierId);
+        String sql = "UPDATE events.ticket_tiers " +
+                     "SET remaining_qty = remaining_qty + ? " +
+                     "WHERE id = ? AND remaining_qty + ? <= total_qty";
+        return jdbcTemplate.update(sql, quantity, tierId, quantity);
     }
 }

@@ -8,6 +8,7 @@ import com.eventplatform.auth.exception.InvalidCredentialsException;
 import com.eventplatform.auth.exception.InvalidRoleException;
 import com.eventplatform.auth.repository.UserRepository;
 import com.eventplatform.auth.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,11 +25,12 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository,
                        JwtUtil jwtUtil,
-                       AuditService auditService) {
+                       AuditService auditService,
+                       BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.auditService = auditService;
-        this.passwordEncoder = new BCryptPasswordEncoder(12);
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -94,7 +96,24 @@ public class AuthService {
         return new LogoutResponse("Logged out successfully");
     }
 
+    public UserDto getMe(String token) {
+        Claims claims;
+        try {
+            claims = jwtUtil.validateToken(token);
+        } catch (Exception e) {
+            throw new InvalidCredentialsException("Invalid or expired token");
+        }
+        Long userId = Long.parseLong(claims.getSubject());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new InvalidCredentialsException("User not found"));
+        return buildUserDto(user);
+    }
+
     private AuthResponse buildAuthResponse(String accessToken, User user) {
+        return new AuthResponse(accessToken, buildUserDto(user));
+    }
+
+    private UserDto buildUserDto(User user) {
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
         userDto.setEmail(user.getEmail());
@@ -103,7 +122,6 @@ public class AuthService {
         userDto.setIsActive(user.getIsActive());
         userDto.setCreatedAt(user.getCreatedAt());
         userDto.setWalletBalance(user.getWalletBalance());
-
-        return new AuthResponse(accessToken, userDto);
+        return userDto;
     }
 }

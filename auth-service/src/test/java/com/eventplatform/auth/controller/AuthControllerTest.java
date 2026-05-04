@@ -3,6 +3,7 @@ package com.eventplatform.auth.controller;
 import com.eventplatform.auth.dto.*;
 import com.eventplatform.auth.exception.*;
 import com.eventplatform.auth.service.AuthService;
+import com.eventplatform.auth.service.RateLimitingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.junit.jupiter.api.BeforeEach;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -30,6 +33,14 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private RateLimitingService rateLimitingService;
+
+    @BeforeEach
+    void setUp() {
+        when(rateLimitingService.isLoginAllowed(any())).thenReturn(true);
+    }
 
     private UserDto sampleUser() {
         UserDto u = new UserDto();

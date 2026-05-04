@@ -8,6 +8,7 @@ import com.eventmanagement.enums.EventCategory;
 import com.eventmanagement.enums.EventStatus;
 import com.eventmanagement.enums.TierStatus;
 import com.eventmanagement.exception.BusinessRuleViolationException;
+import com.eventmanagement.exception.ForbiddenException;
 import com.eventmanagement.exception.ResourceNotFoundException;
 import com.eventmanagement.repository.EventRepository;
 import com.eventmanagement.repository.TicketTierRepository;
@@ -112,12 +113,12 @@ class EventServiceTest {
     }
 
     @Test
-    void addTier_ownershipViolation_throwsBusinessRuleViolation() {
+    void addTier_ownershipViolation_throwsForbiddenException() {
         Long organiserId = 1L;
         Event event = buildEvent(2L); // different owner
         when(eventRepository.findById(event.getId())).thenReturn(Optional.of(event));
 
-        assertThrows(BusinessRuleViolationException.class,
+        assertThrows(ForbiddenException.class,
                 () -> eventService.addTier(event.getId(), buildTierRequest(), organiserId));
     }
 

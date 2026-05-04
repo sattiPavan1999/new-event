@@ -16,6 +16,7 @@ import com.eventmanagement.enums.EventCategory;
 import com.eventmanagement.enums.EventStatus;
 import com.eventmanagement.enums.TierStatus;
 import com.eventmanagement.exception.BusinessRuleViolationException;
+import com.eventmanagement.exception.ForbiddenException;
 import com.eventmanagement.exception.ResourceNotFoundException;
 import com.eventmanagement.repository.EventRepository;
 import com.eventmanagement.repository.TicketTierRepository;
@@ -133,14 +134,14 @@ public class EventService {
             throw new BusinessRuleViolationException("Tier does not belong to this event");
         }
 
-        boolean hasConfirmedOrders = tier.getRemainingQty() < tier.getTotalQty();
+        boolean ticketsSold = tier.getRemainingQty() < tier.getTotalQty();
 
-        if (hasConfirmedOrders) {
+        if (ticketsSold) {
             if (!request.getPrice().equals(tier.getPrice())) {
-                throw new BusinessRuleViolationException("Cannot modify price - confirmed orders exist for this tier");
+                throw new BusinessRuleViolationException("Cannot modify price - tickets have already been sold for this tier");
             }
             if (!request.getTotalQty().equals(tier.getTotalQty())) {
-                throw new BusinessRuleViolationException("Cannot modify quantity - confirmed orders exist for this tier");
+                throw new BusinessRuleViolationException("Cannot modify quantity - tickets have already been sold for this tier");
             }
         }
 
@@ -152,7 +153,7 @@ public class EventService {
 
         tier.setName(request.getName());
         tier.setDescription(request.getDescription());
-        if (!hasConfirmedOrders) {
+        if (!ticketsSold) {
             tier.setPrice(request.getPrice());
             int qtySold = tier.getTotalQty() - tier.getRemainingQty();
             tier.setTotalQty(request.getTotalQty());
@@ -259,6 +260,10 @@ public class EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
         validateEventOwnership(event, organiserId);
+
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new BusinessRuleViolationException("Event is already cancelled");
+        }
 
         event.setStatus(EventStatus.CANCELLED);
         event.setUpdatedAt(LocalDateTime.now());
@@ -373,16 +378,14 @@ public class EventService {
         List<Long> eventIds = eventPage.getContent().stream()
                 .map(Event::getId)
                 .collect(Collectors.toList());
-        if (!eventIds.isEmpty()) {
-            Map<Long, List<TicketTier>> tiersByEvent = ticketTierRepository.findByEventIdIn(eventIds)
-                    .stream()
-                    .collect(Collectors.groupingBy(t -> t.getEvent().getId()));
-            eventPage.getContent().forEach(e ->
-                    e.setTicketTiers(tiersByEvent.getOrDefault(e.getId(), Collections.emptyList())));
-        }
+
+        Map<Long, List<TicketTier>> tiersByEvent = eventIds.isEmpty() ? Collections.emptyMap() :
+                ticketTierRepository.findByEventIdIn(eventIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(t -> t.getEvent().getId()));
 
         List<EventDetailResponse> content = eventPage.getContent().stream()
-                .map(this::toEventDetailResponse)
+                .map(e -> toEventDetailResponse(e, tiersByEvent.getOrDefault(e.getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
         return new PageResponse<>(content, eventPage.getNumber(), eventPage.getSize(),
                 eventPage.getTotalElements(), eventPage.getTotalPages());
@@ -398,7 +401,7 @@ public class EventService {
 
     private void validateEventOwnership(Event event, Long organiserId) {
         if (!event.getOrganiserId().equals(organiserId)) {
-            throw new BusinessRuleViolationException("You do not have permission to modify this event");
+            throw new ForbiddenException("You do not have permission to modify this event");
         }
     }
 
@@ -449,6 +452,10 @@ public class EventService {
     }
 
     private EventDetailResponse toEventDetailResponse(Event event) {
+        return toEventDetailResponse(event, event.getTicketTiers());
+    }
+
+    private EventDetailResponse toEventDetailResponse(Event event, List<TicketTier> tiers) {
         VenueDto venueDto = new VenueDto(
                 event.getVenue().getId(),
                 event.getVenue().getName(),
@@ -458,7 +465,7 @@ public class EventService {
                 event.getVenue().getCapacity()
         );
 
-        List<TierResponse> tiers = event.getTicketTiers().stream()
+        List<TierResponse> tierResponses = tiers.stream()
                 .map(this::toTierResponse)
                 .collect(Collectors.toList());
 
@@ -471,7 +478,7 @@ public class EventService {
                 event.getBannerImageUrl(),
                 event.getStatus(),
                 venueDto,
-                tiers
+                tierResponses
         );
     }
 }

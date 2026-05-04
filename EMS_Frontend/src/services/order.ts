@@ -4,32 +4,16 @@ import type { CancelOrderResponse, CreateOrderRequest, CreateOrderResponse, Orde
 const orderApi = axios.create({
   baseURL: '',
   timeout: 30000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-let _accessToken: string | null = null;
-
-export const setOrderApiToken = (token: string | null) => {
-  _accessToken = token;
-};
-
-orderApi.interceptors.request.use(
-  (config) => {
-    if (_accessToken) {
-      config.headers.Authorization = `Bearer ${_accessToken}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
 orderApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      setOrderApiToken(null);
       window.location.href = '/login';
     }
     return Promise.reject(error);

@@ -20,12 +20,9 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public Long extractOrganiserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new UnauthorizedException("Missing or invalid Authorization header");
-        }
+    public Long extractOrganiserId(String authHeader, String cookieToken) {
+        String token = resolveToken(authHeader, cookieToken);
         try {
-            String token = authHeader.substring(7);
             Claims claims = Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
@@ -39,5 +36,15 @@ public class JwtUtil {
         } catch (JwtException e) {
             throw new UnauthorizedException("Invalid or expired token");
         }
+    }
+
+    private String resolveToken(String authHeader, String cookieToken) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        if (cookieToken != null) {
+            return cookieToken;
+        }
+        throw new UnauthorizedException("Authentication required");
     }
 }

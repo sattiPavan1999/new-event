@@ -118,7 +118,10 @@ public class OrderService {
                 throw new InsufficientWalletBalanceException(totalAmount);
             }
             for (OrderItem item : savedOrder.getItems()) {
-                ticketTierRepository.decrementRemainingQty(item.getTierId(), item.getQuantity());
+                int decremented = ticketTierRepository.decrementRemainingQty(item.getTierId(), item.getQuantity());
+                if (decremented == 0) {
+                    throw new InsufficientInventoryException(item.getQuantity(), 0);
+                }
             }
             savedOrder.setStatus(OrderStatus.CONFIRMED);
             savedOrder.setUpdatedAt(Instant.now());
@@ -133,13 +136,11 @@ public class OrderService {
 
     @Transactional
     public CancelOrderResponse cancelOrder(Long orderId, Long buyerId) {
-        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
-                .orElseThrow(() -> {
-                    if (orderRepository.existsById(orderId)) {
-                        throw new OrderAccessDeniedException(orderId);
-                    }
-                    throw new OrderNotFoundException(orderId);
-                });
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new OrderAccessDeniedException(orderId);
+        }
 
         if (order.getStatus() != OrderStatus.CONFIRMED) {
             throw new OrderCancellationNotAllowedException(orderId,
@@ -183,7 +184,7 @@ public class OrderService {
             size = 10;
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Order> orderPage = orderRepository.findByBuyerIdAndStatus(buyerId, OrderStatus.CONFIRMED, pageable);
 
         List<OrderSummary> summaries = orderPage.getContent().stream()
@@ -201,14 +202,11 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderDetailResponse getOrderById(Long orderId, Long buyerId) {
-        Order order = orderRepository.findByIdAndBuyerId(orderId, buyerId)
-                .orElseThrow(() -> {
-                    if (orderRepository.existsById(orderId)) {
-                        throw new OrderAccessDeniedException(orderId);
-                    }
-                    throw new OrderNotFoundException(orderId);
-                });
-
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new OrderAccessDeniedException(orderId);
+        }
         return mapToOrderDetail(order);
     }
 

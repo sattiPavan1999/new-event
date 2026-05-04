@@ -38,7 +38,7 @@ class OrganiserEventControllerTest {
 
     @BeforeEach
     void stubJwt() {
-        when(jwtUtil.extractOrganiserId(any())).thenReturn(organiserId);
+        when(jwtUtil.extractOrganiserId(any(), any())).thenReturn(organiserId);
     }
 
     private EventResponse sampleEventResponse() {

@@ -188,8 +188,7 @@ class OrderServiceTest {
     void getOrderById_ownOrder_returnsDetail() {
         Long buyerId = 1L;
         Order order = buildOrder(buyerId, OrderStatus.CONFIRMED);
-        when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
-                .thenReturn(Optional.of(order));
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
 
         OrderDetailResponse response = orderService.getOrderById(order.getId(), buyerId);
 
@@ -201,8 +200,9 @@ class OrderServiceTest {
     void getOrderById_orderBelongsToOtherBuyer_throwsOrderAccessDeniedException() {
         Long orderId = 50L;
         Long buyerId = 1L;
-        when(orderRepository.findByIdAndBuyerId(orderId, buyerId)).thenReturn(Optional.empty());
-        when(orderRepository.existsById(orderId)).thenReturn(true);
+        Order order = buildOrder(999L, OrderStatus.CONFIRMED); // different buyer
+        order.setId(orderId);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
         assertThrows(OrderAccessDeniedException.class,
                 () -> orderService.getOrderById(orderId, buyerId));
@@ -212,8 +212,7 @@ class OrderServiceTest {
     void getOrderById_orderDoesNotExist_throwsOrderNotFoundException() {
         Long orderId = 50L;
         Long buyerId = 1L;
-        when(orderRepository.findByIdAndBuyerId(orderId, buyerId)).thenReturn(Optional.empty());
-        when(orderRepository.existsById(orderId)).thenReturn(false);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class,
                 () -> orderService.getOrderById(orderId, buyerId));
@@ -228,8 +227,7 @@ class OrderServiceTest {
         Order order = buildOrderWithItem(buyerId, OrderStatus.CONFIRMED, tierId,
                 Instant.now().plus(2, ChronoUnit.DAYS));
 
-        when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
-                .thenReturn(Optional.of(order));
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
         when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(ticketTierRepository.incrementRemainingQty(any(), anyInt())).thenReturn(1);
         when(walletRepository.creditWallet(eq(buyerId), any())).thenReturn(1);
@@ -250,8 +248,7 @@ class OrderServiceTest {
         Order order = buildOrderWithItem(buyerId, OrderStatus.PENDING, 100L,
                 Instant.now().plus(2, ChronoUnit.DAYS));
 
-        when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
-                .thenReturn(Optional.of(order));
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
 
         assertThrows(OrderCancellationNotAllowedException.class,
                 () -> orderService.cancelOrder(order.getId(), buyerId));
@@ -263,21 +260,32 @@ class OrderServiceTest {
         Order order = buildOrderWithItem(buyerId, OrderStatus.CONFIRMED, 100L,
                 Instant.now().plus(12, ChronoUnit.HOURS));
 
-        when(orderRepository.findByIdAndBuyerId(order.getId(), buyerId))
-                .thenReturn(Optional.of(order));
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
 
         assertThrows(OrderCancellationNotAllowedException.class,
                 () -> orderService.cancelOrder(order.getId(), buyerId));
     }
 
     @Test
-    void cancelOrder_notOwner_throwsOrderNotFoundException() {
+    void cancelOrder_orderDoesNotExist_throwsOrderNotFoundException() {
         Long orderId = 50L;
         Long buyerId = 1L;
-        when(orderRepository.findByIdAndBuyerId(orderId, buyerId)).thenReturn(Optional.empty());
-        when(orderRepository.existsById(orderId)).thenReturn(false);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class,
+                () -> orderService.cancelOrder(orderId, buyerId));
+    }
+
+    @Test
+    void cancelOrder_orderBelongsToOtherBuyer_throwsOrderAccessDeniedException() {
+        Long orderId = 50L;
+        Long buyerId = 1L;
+        Order order = buildOrderWithItem(999L, OrderStatus.CONFIRMED, 100L,
+                Instant.now().plus(2, ChronoUnit.DAYS));
+        order.setId(orderId);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        assertThrows(OrderAccessDeniedException.class,
                 () -> orderService.cancelOrder(orderId, buyerId));
     }
 

@@ -52,23 +52,19 @@ class OrderRepositoryTest {
     }
 
     @Test
-    void findByIdAndBuyerId_correctOwner_returnsOrder() {
+    void findById_existingOrder_returnsOrder() {
         Long buyerId = 1L;
         Order saved = saveOrder(buyerId, OrderStatus.CONFIRMED);
 
-        Optional<Order> found = orderRepository.findByIdAndBuyerId(saved.getId(), buyerId);
+        Optional<Order> found = orderRepository.findById(saved.getId());
 
         assertTrue(found.isPresent());
         assertEquals(buyerId, found.get().getBuyerId());
     }
 
     @Test
-    void findByIdAndBuyerId_wrongOwner_returnsEmpty() {
-        Long buyerId = 1L;
-        Order saved = saveOrder(buyerId, OrderStatus.CONFIRMED);
-
-        Optional<Order> found = orderRepository.findByIdAndBuyerId(saved.getId(), 999L);
-
+    void findById_missingOrder_returnsEmpty() {
+        Optional<Order> found = orderRepository.findById(999L);
         assertFalse(found.isPresent());
     }
 
