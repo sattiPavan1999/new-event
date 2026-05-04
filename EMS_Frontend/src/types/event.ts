@@ -118,13 +118,6 @@ export interface SalesSummary {
   tiers: SalesSummaryTier[];
 }
 
-export interface TierDeletionCheck {
-  canDelete: boolean;
-  orderCount: number;
-  tierName: string;
-  message: string;
-}
-
 export interface CreateEventRequest {
   title: string;
   description?: string;

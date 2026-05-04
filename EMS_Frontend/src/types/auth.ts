@@ -25,9 +25,3 @@ export interface RegisterRequest {
   role: 'BUYER' | 'ORGANISER';
 }
 
-export interface AuthError {
-  error: string;
-  timestamp?: string;
-  field?: string;
-  fields?: Record<string, string>;
-}
