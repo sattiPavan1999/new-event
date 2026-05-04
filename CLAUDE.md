@@ -15,18 +15,19 @@ cd EMS_Frontend
 npm run dev          # dev server on localhost:5173
 npm run build        # production build
 npm run lint         # ESLint check
-npm run test         # Vitest (watch mode)
-npm run test -- --run             # Vitest single run
-npm run test -- --run src/path/to/file.test.tsx  # single test file
+npm run test         # Vitest single run (not watch mode)
+npm run test -- src/path/to/file.test.tsx  # single test file
 ```
 
 ### Backend Services (each service directory)
 
+Use `./mvnw` (Maven wrapper) instead of bare `mvn` — it's included in each service directory.
+
 ```bash
-mvn spring-boot:run           # run service locally
-mvn test                      # run all tests
-mvn test -Dtest=ClassName     # run a single test class
-mvn package -DskipTests       # build JAR
+./mvnw spring-boot:run           # run service locally
+./mvnw test                      # run all tests (uses H2 in-memory DB — no Postgres needed)
+./mvnw test -Dtest=ClassName     # run a single test class
+./mvnw package -DskipTests       # build JAR
 ```
 
 ### Full Stack
@@ -95,14 +96,16 @@ Cross-schema relationships are enforced at the application layer, not via foreig
 ```
 src/
 ├── App.tsx           # Route definitions + ProtectedRoute wrapper
-├── contexts/         # AuthContext (user state, token storage)
-├── services/         # API fetch wrappers (one file per backend service)
+├── contexts/         # AuthContext (JWT + user state), CartContext (ticket cart)
+├── services/         # Axios wrappers — one file per backend service (auth, event, order)
 ├── views/            # Page-level components mapped to routes
 ├── components/       # Reusable UI (layouts, form elements, dialogs)
 ├── hooks/            # Custom React hooks
 ├── types/            # Shared TypeScript interfaces
 └── constants/        # App-wide constants
 ```
+
+Key libraries: React Query (`@tanstack/react-query`) for server state, Axios for HTTP, Zod for runtime validation, React Router v7, Tailwind CSS v4.
 
 ### Backend Layer Pattern (all three services)
 
@@ -111,6 +114,15 @@ Controller → Service → Repository (JPA) → PostgreSQL
 ```
 
 Each service uses Flyway for schema migrations, `@ControllerAdvice` for centralized error handling, and explicit DTOs (no Lombok — all getters/setters written by hand). The event service has two controllers: `OrganiserEventController` (`/api/organiser/events`) for organiser operations and a public controller (`/api/events`) for browsing.
+
+The Order Service has an additional `client/` package: `EventServiceClient` calls the Event Service synchronously over HTTP (Spring `RestClient`) to validate event data when creating orders. The Event Service URL must be reachable at order-creation time.
+
+OpenAPI 3.0 specs for each service are at:
+- `auth-service/swagger/auth-openapi.yaml`
+- `event_management_service/src/swagger/event-management-openapi.yaml`
+- `order_service/swagger/order-service-openapi.yaml`
+
+Backend package roots differ across services: `com.eventplatform.auth` (auth), `com.eventmanagement` (event), `com.ticketing.orderservice` (order).
 
 ## Environment Variables
 
@@ -129,7 +141,7 @@ Each individual backend service also has a `.env.example` for running services o
 ## Testing
 
 - **Frontend**: Vitest + jsdom. Test setup in `src/test/setup.ts`. Path alias `@/` resolves to `src/`.
-- **Backend**: JUnit 5. Integration tests in each service's `src/test/` directory.
+- **Backend**: JUnit 5 + H2 in-memory database. No running PostgreSQL instance required to run backend tests. Integration tests are in each service's `src/test/` directory alongside unit tests.
 - **E2E**: Playwright config present in `EMS_Frontend/.playwright-mcp/`.
 
 ## Git Workflow
